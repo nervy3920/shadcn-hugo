@@ -133,6 +133,35 @@
   }
   .prose code {
     @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: pre-wrap;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+  
+  /* 文章内容链接样式 */
+  .prose a {
+    @apply text-primary underline decoration-2 underline-offset-4 transition-all duration-200 hover:text-primary/80 hover:decoration-primary;
+    text-decoration-skip-ink: none;
+    text-decoration-skip: none;
+  }
+  
+  .prose a::before {
+    content: " \f35d ";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    @apply mr-1 text-xs inline-block;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .prose a:visited {
+    @apply text-purple-600 dark:text-purple-400;
+  }
+  
+  .prose a:visited:hover {
+    @apply text-purple-700 dark:text-purple-300;
   }
   .prose pre code {
     @apply p-0 text-[13px] leading-relaxed font-normal;
