@@ -1,0 +1,23 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="space-y-1">
+    <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
+      <i class="fa-solid fa-tag text-primary"></i>
+      {{ .Title }}
+    </h1>
+    <p class="text-lg text-muted-foreground">归档于 {{ .Title }} 的文章</p>
+  </div>
+
+  {{ partial "ui/separator.html" (dict "class" "my-8") }}
+
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {{ range .Paginator.Pages }}
+      {{ partial "post-card.html" . }}
+    {{ end }}
+  </div>
+
+  <div class="mt-10">
+    {{ partial "ui/pagination.html" . }}
+  </div>
+</div>
+{{ end }}

@@ -1,0 +1,32 @@
+<header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  <div class="container flex h-14 items-center">
+    <div class="mr-4 hidden md:flex">
+      <a class="mr-6 flex items-center space-x-2" href="/">
+        <i class="fa-solid fa-terminal text-xl"></i>
+        <span class="hidden font-bold sm:inline-block">{{ .Site.Params.siteName }}</span>
+      </a>
+      <nav class="flex items-center space-x-6 text-sm font-medium">
+        {{ $currentPage := . }}
+        {{ range .Site.Menus.main }}
+          <a class="transition-colors hover:text-foreground/80 {{ if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }}text-foreground{{ else }}text-foreground/60{{ end }}" href="{{ .URL }}">
+            {{ .Name }}
+          </a>
+        {{ end }}
+      </nav>
+    </div>
+    <button class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:text-accent-foreground h-9 py-2 mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden" type="button">
+      <i class="fa-solid fa-bars text-lg"></i>
+      <span class="sr-only">切换菜单</span>
+    </button>
+    <div class="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+      <div class="w-full flex-1 md:w-auto md:flex-none">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"></i>
+          {{ partial "ui/input.html" (dict "placeholder" "搜索文章..." "class" "h-9 w-full pl-9 md:w-[200px] lg:w-[300px]") }}
+        </div>
+      </div>
+      <nav class="flex items-center">
+      </nav>
+    </div>
+  </div>
+</header>

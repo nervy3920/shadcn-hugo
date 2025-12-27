@@ -1,0 +1,21 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="space-y-1">
+    <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
+      <i class="fa-solid fa-layer-group text-primary"></i>
+      {{ .Title }}
+    </h1>
+    <p class="text-lg text-muted-foreground">浏览所有 {{ .Title }}</p>
+  </div>
+
+  {{ partial "ui/separator.html" (dict "class" "my-8") }}
+
+  <div class="flex flex-wrap gap-3">
+    {{ range .Data.Terms }}
+      <a href="{{ .Page.RelPermalink }}" class="group">
+        {{ partial "ui/badge.html" (dict "text" (printf "%s (%d)" .Page.Title .Count) "variant" "outline") }}
+      </a>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

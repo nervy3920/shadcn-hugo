@@ -1,0 +1,58 @@
+baseURL = 'https://example.org/'
+languageCode = 'zh-cn'
+title = 'Shadcn Hugo 博客标题'
+theme = 'shadcn-hugo'
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[params]
+  siteName = "Shadcn Hugo"
+  description = "一个使用 Hugo、Tailwind CSS 和 shadcn/ui 构建的现代博客。"
+  keywords = "Hugo, Tailwind CSS, shadcn/ui, 博客, 前端开发"
+  heroDescription = "探索现代 Web 开发技术，分享技术见解与实践经验。"
+  gridColumns = 3
+  pagerSize = 9
+  github = "https://github.com"
+  twitter = "https://twitter.com"
+  email = "mailto:example@example.com"
+
+[[params.links]]
+  name = "Hugo"
+  url = "https://gohugo.io"
+[[params.links]]
+  name = "Tailwind CSS"
+  url = "https://tailwindcss.com"
+[[params.links]]
+  name = "shadcn/ui"
+  url = "https://ui.shadcn.com"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    noClasses = false
+    style = "github"
+  [markup.tableOfContents]
+    endLevel = 3
+    ordered = false
+    startLevel = 2
+
+[menu]
+  [[menu.main]]
+    name = "首页"
+    url = "/"
+    weight = 1
+  [[menu.main]]
+    name = "文章"
+    url = "/posts/"
+    weight = 2
+  [[menu.main]]
+    name = "分类"
+    url = "/categories/"
+    weight = 3
+  [[menu.main]]
+    name = "标签"
+    url = "/tags/"
+    weight = 4

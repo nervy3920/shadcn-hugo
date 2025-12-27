@@ -1,0 +1,130 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="flex flex-col items-start gap-4 md:flex-row md:justify-between md:items-center">
+    <div class="space-y-1">
+      <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
+        <i class="fa-solid fa-magnifying-glass text-primary"></i>
+        搜索结果
+      </h1>
+      <p class="text-lg text-muted-foreground" id="search-stats">正在搜索...</p>
+    </div>
+  </div>
+  
+  {{ partial "ui/separator.html" (dict "class" "my-8") }}
+
+  <div id="search-results-full" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-{{ .Site.Params.gridColumns | default 4 }}">
+    <!-- 结果将通过 JS 填充 -->
+  </div>
+
+  <div id="search-pagination" class="mt-10 flex justify-center gap-2">
+    <!-- 分页将通过 JS 填充 -->
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q');
+    const resultsContainer = document.getElementById('search-results-full');
+    const statsContainer = document.getElementById('search-stats');
+    const paginationContainer = document.getElementById('search-pagination');
+
+    const itemsPerPage = {{ .Site.Params.pagerSize | default 8 }};
+    let currentPage = 1;
+    let allResults = [];
+
+    if (!query) {
+        statsContainer.textContent = '请输入搜索关键词';
+        return;
+    }
+
+    function renderPage(page) {
+        const start = (page - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageResults = allResults.slice(start, end);
+
+        resultsContainer.innerHTML = pageResults.map(result => `
+            <div class="group relative flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 h-full">
+                ${result.image ? `
+                <div class="aspect-video w-full overflow-hidden">
+                    <img src="${result.image}" alt="${result.title}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+                </div>
+                ` : ''}
+                <div class="flex flex-1 flex-col p-6">
+                    <div class="flex flex-col space-y-1.5 mb-4">
+                        <div class="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                            <i class="fa-regular fa-calendar"></i>
+                            <span>${result.date}</span>
+                        </div>
+                        <h3 class="text-xl font-bold leading-tight tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+                            <a href="${result.permalink}">${result.title}</a>
+                        </h3>
+                    </div>
+                    <div class="flex-1 text-sm text-muted-foreground line-clamp-3 mb-4">
+                        ${result.summary}
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-auto pt-4 border-t">
+                        ${(result.tags || []).map(tag => `
+                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent bg-secondary text-secondary-foreground gap-1">
+                                <i class="fa-solid fa-tag text-[10px]"></i>
+                                ${tag}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        renderPagination();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(allResults.length / itemsPerPage);
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += `
+                <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 w-10 ${i === currentPage ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-background'}" onclick="window.setSearchPage(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+        paginationContainer.innerHTML = html;
+    }
+
+    window.setSearchPage = (page) => {
+        currentPage = page;
+        renderPage(page);
+    };
+
+    try {
+        const response = await fetch('/index.json');
+        const index = await response.json();
+        const lowQuery = query.toLowerCase();
+        
+        allResults = index.filter(item => {
+            return (item.title && item.title.toLowerCase().includes(lowQuery)) ||
+                   (item.contents && item.contents.toLowerCase().includes(lowQuery)) ||
+                   (item.tags && item.tags.some(t => t.toLowerCase().includes(lowQuery))) ||
+                   (item.categories && item.categories.some(c => c.toLowerCase().includes(lowQuery)));
+        });
+
+        statsContainer.textContent = `找到 ${allResults.length} 个关于 "${query}" 的结果`;
+
+        if (allResults.length === 0) {
+            resultsContainer.innerHTML = '<p class="col-span-full text-center py-10 text-muted-foreground">未找到匹配内容</p>';
+        } else {
+            renderPage(1);
+        }
+    } catch (e) {
+        console.error('Search failed:', e);
+        statsContainer.textContent = '搜索加载失败，请稍后再试';
+    }
+});
+</script>
+{{ end }}

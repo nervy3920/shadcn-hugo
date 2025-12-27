@@ -1,0 +1,14 @@
+{{- $.Scratch.Add "index" slice -}}
+{{- range .Site.RegularPages -}}
+    {{- $image := "" -}}
+    {{- with .Resources.GetMatch "featured-image*" -}}
+        {{- $image = .RelPermalink -}}
+    {{- else -}}
+        {{- $images := findRE "<img [^>]*src=\"([^\"]+)\"[^>]*>" .Content 1 -}}
+        {{- if ge (len $images) 1 -}}
+            {{- $image = (index $images 0 | replaceRE "<img [^>]*src=\"([^\"]+)\"[^>]*>" "$1") -}}
+        {{- end -}}
+    {{- end -}}
+    {{- $.Scratch.Add "index" (dict "title" .Title "tags" .Params.tags "categories" .Params.categories "contents" .Plain "permalink" .RelPermalink "date" (.Date.Format "2006年01月02日") "summary" (.Summary | plainify | truncate 100) "image" $image) -}}
+{{- end -}}
+{{- $.Scratch.Get "index" | jsonify -}}

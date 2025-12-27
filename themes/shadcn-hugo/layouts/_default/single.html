@@ -1,0 +1,74 @@
+{{ define "main" }}
+<div class="container relative py-10">
+  <div class="mx-auto flex w-full flex-col gap-10 lg:flex-row">
+    <!-- Main Content -->
+    <article class="flex-1 min-w-0">
+      <div class="space-y-4">
+        <div class="flex items-center space-x-2 text-sm text-muted-foreground">
+          <i class="fa-regular fa-calendar text-xs"></i>
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006年01月02日" }}</time>
+          {{ if .Params.categories }}
+            <span>•</span>
+            <i class="fa-regular fa-folder text-xs"></i>
+            {{ range .Params.categories }}
+              <a href="{{ "categories/" | relURL }}{{ . | urlize }}" class="hover:text-foreground transition-colors">{{ . }}</a>
+            {{ end }}
+          {{ end }}
+          {{ if .Content }}
+            <span>•</span>
+            <i class="fa-regular fa-clock text-xs"></i>
+            <span>{{ countwords .Plain }} 字</span>
+          {{ end }}
+        </div>
+        <h1 class="inline-block font-extrabold tracking-tight text-4xl lg:text-5xl">{{ .Title }}</h1>
+        {{ with .Params.description }}
+          <p class="text-xl text-muted-foreground">{{ . }}</p>
+        {{ end }}
+      </div>
+
+      {{ partial "ui/separator.html" (dict "class" "my-8") }}
+
+      <div class="prose dark:prose-invert max-w-none">
+        {{ .Content }}
+      </div>
+
+      {{ partial "ui/separator.html" (dict "class" "my-8") }}
+
+      {{ if .Params.tags }}
+        <div class="flex flex-wrap gap-2">
+          {{ range .Params.tags }}
+            <a href="{{ "tags/" | relURL }}{{ . | urlize }}">
+              {{ partial "ui/badge.html" (dict "text" . "variant" "secondary") }}
+            </a>
+          {{ end }}
+        </div>
+      {{ end }}
+    </article>
+
+    <!-- Sidebar / TOC -->
+    {{ if .TableOfContents }}
+    <aside class="hidden w-[250px] shrink-0 lg:block">
+      <div class="sticky top-20 flex flex-col max-h-[calc(100vh-6rem)]">
+        <h4 class="text-sm font-semibold uppercase tracking-wider text-foreground/70 border-b pb-2 flex items-center gap-2 mb-4 shrink-0">
+          <i class="fa-solid fa-list-ul text-xs"></i>
+          目录
+        </h4>
+        <div class="toc text-sm text-muted-foreground overflow-y-auto pr-2 custom-scrollbar">
+          {{ .TableOfContents }}
+        </div>
+      </div>
+    </aside>
+    {{ end }}
+  </div>
+</div>
+
+<style>
+  /* Code block styling */
+  pre {
+    @apply relative overflow-x-auto !m-0;
+  }
+  code {
+    @apply font-mono text-sm leading-relaxed;
+  }
+</style>
+{{ end }}

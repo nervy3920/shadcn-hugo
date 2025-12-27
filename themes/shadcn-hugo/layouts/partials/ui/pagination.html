@@ -1,0 +1,42 @@
+{{ $paginator := .Paginator }}
+{{ if gt $paginator.TotalPages 1 }}
+<nav class="flex items-center justify-center space-x-2 py-10" role="navigation" aria-label="分页">
+  {{ if $paginator.HasPrev }}
+    <a href="{{ $paginator.Prev.URL }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2" aria-label="上一页">
+      <i class="fa-solid fa-chevron-left mr-2 text-xs"></i>
+      上一页
+    </a>
+  {{ else }}
+    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none opacity-50 border border-input bg-background h-10 px-4 py-2" disabled aria-label="上一页">
+      <i class="fa-solid fa-chevron-left mr-2 text-xs"></i>
+      上一页
+    </button>
+  {{ end }}
+
+  <div class="flex items-center space-x-1">
+    {{ range $paginator.Pagers }}
+      {{ if eq . $paginator }}
+        <span class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-primary bg-primary text-primary-foreground h-10 w-10" aria-current="page">
+          {{ .PageNumber }}
+        </span>
+      {{ else }}
+        <a href="{{ .URL }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10">
+          {{ .PageNumber }}
+        </a>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  {{ if $paginator.HasNext }}
+    <a href="{{ $paginator.Next.URL }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2" aria-label="下一页">
+      下一页
+      <i class="fa-solid fa-chevron-right ml-2 text-xs"></i>
+    </a>
+  {{ else }}
+    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none opacity-50 border border-input bg-background h-10 px-4 py-2" disabled aria-label="下一页">
+      下一页
+      <i class="fa-solid fa-chevron-right ml-2 text-xs"></i>
+    </button>
+  {{ end }}
+</nav>
+{{ end }}

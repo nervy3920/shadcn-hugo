@@ -1,0 +1,7 @@
+{{ $orientation := .orientation | default "horizontal" }}
+{{ $class := .class | default "" }}
+
+<div
+  role="none"
+  class="shrink-0 bg-border {{ if eq $orientation "horizontal" }}h-[1px] w-full{{ else }}h-full w-[1px]{{ end }} {{ $class }}"
+></div>

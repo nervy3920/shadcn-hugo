@@ -1,0 +1,21 @@
+<footer class="border-t py-6 md:py-0">
+  <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+    <p class="text-center text-sm leading-loose text-muted-foreground md:text-left">
+      由 <a href="{{ .Site.BaseURL }}" class="font-medium underline underline-offset-4">{{ .Site.Title }}</a> 构建。
+      {{ if .Site.Params.github }}
+      源码托管在 <a href="{{ .Site.Params.github }}" target="_blank" rel="noreferrer" class="font-medium underline underline-offset-4">GitHub</a>。
+      {{ end }}
+    </p>
+    <div class="flex items-center gap-4">
+      {{ if .Site.Params.twitter }}
+        {{ partial "ui/button.html" (dict "variant" "ghost" "size" "sm" "text" "<i class='fa-brands fa-twitter text-lg'></i>" "href" .Site.Params.twitter) }}
+      {{ end }}
+      {{ if .Site.Params.github }}
+        {{ partial "ui/button.html" (dict "variant" "ghost" "size" "sm" "text" "<i class='fa-brands fa-github text-lg'></i>" "href" .Site.Params.github) }}
+      {{ end }}
+      {{ if .Site.Params.email }}
+        {{ partial "ui/button.html" (dict "variant" "ghost" "size" "sm" "text" "<i class='fa-solid fa-envelope text-lg'></i>" "href" .Site.Params.email) }}
+      {{ end }}
+    </div>
+  </div>
+</footer>

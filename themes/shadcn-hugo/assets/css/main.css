@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+@config "./tailwind.config.js";
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  code, pre {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  }
+}
+
+@layer components {
+  .prose {
+    @apply text-foreground/90 leading-7;
+  }
+  .prose h1 {
+    @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-8;
+  }
+  .prose h2 {
+    @apply scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 mt-10 mb-4;
+  }
+  .prose h3 {
+    @apply scroll-m-20 text-2xl font-semibold tracking-tight mt-8 mb-4;
+  }
+  .prose h4 {
+    @apply scroll-m-20 text-xl font-semibold tracking-tight mt-6 mb-2;
+  }
+  .prose p {
+    @apply leading-7 [&:not(:first-child)]:mt-6;
+  }
+  .prose blockquote {
+    @apply mt-6 border-l-2 pl-6 italic text-muted-foreground;
+  }
+  .prose ul {
+    @apply my-6 ml-6 list-disc [&>li]:mt-2;
+  }
+  .prose ol {
+    @apply my-6 ml-6 list-decimal [&>li]:mt-2;
+  }
+  .prose hr {
+    @apply my-4 md:my-8;
+  }
+  .prose table {
+    @apply w-full my-6 overflow-y-auto;
+  }
+  .prose tr {
+    @apply m-0 border-t p-0 even:bg-muted;
+  }
+  .prose th {
+    @apply border px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right;
+  }
+  .prose td {
+    @apply border px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right;
+  }
+  .prose pre {
+    @apply mb-4 mt-6 overflow-x-auto rounded-lg border p-4;
+    background-color: #f6f8fa !important;
+    position: relative !important;
+  }
+  .dark .prose pre {
+    background-color: #0d1117 !important;
+  }
+  .prose code {
+    @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold;
+  }
+  .prose pre code {
+    @apply p-0 text-[13px] leading-relaxed font-normal;
+    background-color: transparent !important;
+    color: #24292e !important;
+  }
+  .dark .prose pre code {
+    color: #e6edf3 !important;
+  }
+
+  .copy-code-button {
+    @apply absolute right-2 top-2 h-8 w-8 rounded-md border bg-background p-0 text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 z-10 flex items-center justify-center;
+  }
+}
+
+/* TOC 目录深度优化 */
+.toc {
+  @apply relative border-l border-muted ml-2;
+}
+
+.toc ul {
+  @apply list-none p-0 m-0;
+}
+
+.toc a {
+  @apply transition-all hover:text-primary block py-1.5 text-muted-foreground border-l-2 border-transparent -ml-[1px] pl-4 text-sm;
+}
+
+/* 针对 Hugo 生成的嵌套结构进行精确缩进 */
+.toc nav ul li a {
+  padding-left: 1rem !important;
+}
+
+.toc nav ul li ul li a {
+  padding-left: 2.5rem !important;
+}
+
+.toc nav ul li ul li ul li a {
+  padding-left: 4rem !important;
+}
+
+.toc nav ul li ul li ul li ul li a {
+  padding-left: 5rem !important;
+}
+
+.toc nav ul li a {
+  @apply font-medium;
+}
+
+.toc a:hover {
+  @apply text-primary border-primary/30 bg-accent/50;
+}
+
+.toc a.active {
+  @apply text-primary border-primary bg-accent font-semibold;
+}
+
+/* 自定义滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}

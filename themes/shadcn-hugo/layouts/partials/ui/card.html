@@ -1,0 +1,18 @@
+<div class="rounded-lg border bg-card text-card-foreground shadow-sm {{ .class }}">
+  {{ if .title }}
+  <div class="flex flex-col space-y-1.5 p-6">
+    <h3 class="text-2xl font-semibold leading-none tracking-tight">{{ .title }}</h3>
+    {{ if .description }}
+    <p class="text-sm text-muted-foreground">{{ .description }}</p>
+    {{ end }}
+  </div>
+  {{ end }}
+  <div class="p-6 pt-0">
+    {{ .content | safeHTML }}
+  </div>
+  {{ if .footer }}
+  <div class="flex items-center p-6 pt-0">
+    {{ .footer | safeHTML }}
+  </div>
+  {{ end }}
+</div>
