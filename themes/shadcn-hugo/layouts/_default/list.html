@@ -9,15 +9,18 @@
       {{ with .Description }}
         <p class="text-lg text-muted-foreground">{{ . }}</p>
       {{ end }}
+      <p class="text-lg text-muted-foreground">浏览所有 {{ .Title }} (共 {{ len .Data.Pages }} 篇)</p>
     </div>
   </div>
   
   {{ partial "ui/separator.html" (dict "class" "my-8") }}
 
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-{{ .Site.Params.gridColumns | default 4 }}">
+  {{ $gridColumns := .Site.Params.gridColumns | default 4 }}
+{{ $lgGridCols := cond (eq $gridColumns 1) "lg:grid-cols-1" (cond (eq $gridColumns 2) "lg:grid-cols-2" (cond (eq $gridColumns 3) "lg:grid-cols-3" "lg:grid-cols-4")) }}
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 {{ $lgGridCols }}">
     {{ $paginator := .Paginate .Data.Pages (.Site.Params.pagerSize | default 8) }}
     {{ range $paginator.Pages }}
-      {{ partial "post-card.html" . }}
+      {{ partial "post-card.html" (dict "page" . "gridColumns" $gridColumns) }}
     {{ end }}
   </div>
 

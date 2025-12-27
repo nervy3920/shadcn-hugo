@@ -5,17 +5,50 @@
       <i class="fa-solid fa-layer-group text-primary"></i>
       {{ .Title }}
     </h1>
-    <p class="text-lg text-muted-foreground">浏览所有 {{ .Title }}</p>
+    {{ if eq .Title "Tags" }}
+      {{ $allTags := .Data.Terms }}
+      {{ $totalTags := len $allTags }}
+      {{ $displayCount := cond (gt $totalTags 520) 520 $totalTags }}
+      <p class="text-lg text-muted-foreground">浏览所有 Tags (共 {{ $totalTags }} 个，显示前 {{ $displayCount }} 个)</p>
+    {{ else }}
+      <p class="text-lg text-muted-foreground">浏览所有 {{ .Title }} (共 {{ len .Data.Terms }} 个)</p>
+    {{ end }}
   </div>
 
   {{ partial "ui/separator.html" (dict "class" "my-8") }}
 
-  <div class="flex flex-wrap gap-3">
-    {{ range .Data.Terms }}
-      <a href="{{ .Page.RelPermalink }}" class="group">
-        {{ partial "ui/badge.html" (dict "text" (printf "%s (%d)" .Page.Title .Count) "variant" "outline") }}
-      </a>
+  {{ if eq .Title "Tags" }}
+    <!-- 标签页面 - 显示热门的520个标签 -->
+    {{ $allTags := .Data.Terms }}
+    
+    <!-- 将标签转换为数组并按文章数量排序 -->
+    {{ $tagsArray := slice }}
+    {{ range $key, $term := $allTags }}
+      {{ $tagsArray = $tagsArray | append (dict "key" $key "term" $term "count" $term.Count) }}
     {{ end }}
-  </div>
+    
+    <!-- 按文章数量降序排序 -->
+    {{ $sortedTags := sort $tagsArray "count" "desc" }}
+    
+    <!-- 只取前520个热门标签 -->
+    {{ $hotTags := first 520 $sortedTags }}
+    
+    <div class="flex flex-wrap gap-3">
+      {{ range $hotTags }}
+        <a href="{{ .term.Page.RelPermalink }}" class="group">
+          {{ partial "ui/badge.html" (dict "text" (printf "%s (%d)" .key .count) "variant" "outline") }}
+        </a>
+      {{ end }}
+    </div>
+  {{ else }}
+    <!-- 其他分类页面 - 显示全部 -->
+    <div class="flex flex-wrap gap-3">
+      {{ range .Data.Terms }}
+        <a href="{{ .Page.RelPermalink }}" class="group">
+          {{ partial "ui/badge.html" (dict "text" (printf "%s (%d)" .Page.Title .Count) "variant" "outline") }}
+        </a>
+      {{ end }}
+    </div>
+  {{ end }}
 </div>
 {{ end }}

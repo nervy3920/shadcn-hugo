@@ -7,7 +7,7 @@
     button.innerHTML = '<i class="fa-regular fa-copy"></i>';
 
     button.addEventListener('click', async () => {
-      const code = codeBlock.querySelector('code').innerText;
+      const code = codeBlock.innerText;
       try {
         await navigator.clipboard.writeText(code);
         button.innerHTML = '<i class="fa-solid fa-check text-green-500"></i>';
@@ -23,13 +23,13 @@
     return button;
   };
 
-  const highlightBlocks = document.querySelectorAll('.highlight');
-  highlightBlocks.forEach(block => {
-    const pre = block.querySelector('pre');
-    if (pre) {
-      const button = createCopyButton(block);
-      block.style.position = 'relative';
-      block.appendChild(button);
+  const codeBlocks = document.querySelectorAll('pre code');
+  codeBlocks.forEach(code => {
+    const pre = code.parentElement;
+    if (pre && !pre.querySelector('.copy-code-button')) {
+      const button = createCopyButton(pre);
+      pre.style.position = 'relative';
+      pre.appendChild(button);
     }
   });
 })();

@@ -28,7 +28,7 @@
 
       {{ partial "ui/separator.html" (dict "class" "my-8") }}
 
-      <div class="prose dark:prose-invert max-w-none">
+      <div class="prose dark:prose-invert max-w-none article-content">
         {{ .Content }}
       </div>
 
@@ -43,6 +43,8 @@
           {{ end }}
         </div>
       {{ end }}
+
+      {{ partial "giscus.html" . }}
     </article>
 
     <!-- Sidebar / TOC -->
@@ -62,13 +64,284 @@
   </div>
 </div>
 
+<!-- 图片查看器模态框 -->
+<div id="imageViewer" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 backdrop-blur-sm">
+  <button id="closeViewer" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
+    <i class="fas fa-times text-2xl"></i>
+  </button>
+  
+  <button id="prevImage" class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10">
+    <i class="fas fa-chevron-left text-2xl"></i>
+  </button>
+  
+  <button id="nextImage" class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10">
+    <i class="fas fa-chevron-right text-2xl"></i>
+  </button>
+  
+  <button id="zoomIn" class="absolute bottom-4 left-4 text-white hover:text-gray-300 transition-colors z-10">
+    <i class="fas fa-search-plus text-xl"></i>
+  </button>
+  
+  <button id="zoomOut" class="absolute bottom-4 left-16 text-white hover:text-gray-300 transition-colors z-10">
+    <i class="fas fa-search-minus text-xl"></i>
+  </button>
+  
+  <button id="zoomReset" class="absolute bottom-4 left-28 text-white hover:text-gray-300 transition-colors z-10">
+    <i class="fas fa-compress text-xl"></i>
+  </button>
+  
+  <div class="relative max-w-[90vw] max-h-[90vh] overflow-hidden">
+    <img id="viewerImage" src="" alt="" class="max-w-full max-h-full object-contain transition-transform duration-300">
+  </div>
+  
+  <div class="absolute bottom-4 right-4 text-white text-sm">
+    <span id="imageCounter"></span>
+  </div>
+</div>
+
 <style>
-  /* Code block styling */
+  /* 文章内容样式 */
+  .article-content {
+    @apply leading-relaxed;
+  }
+  
+  /* 图片样式 - 默认居中，上下间距 */
+  .article-content img {
+    @apply block mx-auto my-8 rounded-lg shadow-md cursor-pointer transition-all duration-200 hover:shadow-xl !important;
+    max-width: 100%;
+    height: auto;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  /* 两个连续图片之间的更大间距 */
+  .article-content img + img {
+    margin-top: 2.5rem !important;
+  }
+  
+  /* 代码块样式 */
   pre {
     @apply relative overflow-x-auto !m-0;
   }
   code {
     @apply font-mono text-sm leading-relaxed;
   }
+  
+  /* 图片查看器样式 */
+  #imageViewer {
+    @apply flex;
+  }
+  
+  #imageViewer.hidden {
+    @apply hidden;
+  }
+  
+  /* 自定义滚动条 */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const imageViewer = document.getElementById('imageViewer');
+  const viewerImage = document.getElementById('viewerImage');
+  const imageCounter = document.getElementById('imageCounter');
+  const closeBtn = document.getElementById('closeViewer');
+  const prevBtn = document.getElementById('prevImage');
+  const nextBtn = document.getElementById('nextImage');
+  const zoomInBtn = document.getElementById('zoomIn');
+  const zoomOutBtn = document.getElementById('zoomOut');
+  const zoomResetBtn = document.getElementById('zoomReset');
+  
+  let currentImageIndex = 0;
+  let images = [];
+  let currentZoom = 1;
+  
+  // 获取文章中所有图片
+  function getArticleImages() {
+    const articleImages = document.querySelectorAll('.article-content img');
+    images = Array.from(articleImages);
+    return images;
+  }
+  
+  // 打开图片查看器
+  function openViewer(index) {
+    images = getArticleImages();
+    currentImageIndex = index;
+    currentZoom = 1;
+    
+    if (images.length === 0) return;
+    
+    const img = images[currentImageIndex];
+    viewerImage.src = img.src;
+    viewerImage.alt = img.alt || '';
+    updateImageCounter();
+    resetZoom();
+    
+    imageViewer.classList.remove('hidden');
+    imageViewer.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  // 关闭图片查看器
+  function closeViewer() {
+    imageViewer.classList.add('hidden');
+    imageViewer.classList.remove('flex');
+    document.body.style.overflow = '';
+    currentZoom = 1;
+  }
+  
+  // 显示上一张图片
+  function showPrevImage() {
+    if (images.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+    updateViewerImage();
+  }
+  
+  // 显示下一张图片
+  function showNextImage() {
+    if (images.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    updateViewerImage();
+  }
+  
+  // 更新查看器中的图片
+  function updateViewerImage() {
+    const img = images[currentImageIndex];
+    viewerImage.src = img.src;
+    viewerImage.alt = img.alt || '';
+    updateImageCounter();
+    resetZoom();
+  }
+  
+  // 更新图片计数器
+  function updateImageCounter() {
+    if (images.length > 1) {
+      imageCounter.textContent = `${currentImageIndex + 1} / ${images.length}`;
+    } else {
+      imageCounter.textContent = '';
+    }
+  }
+  
+  // 放大
+  function zoomIn() {
+    currentZoom = Math.min(currentZoom + 0.2, 3);
+    updateZoom();
+  }
+  
+  // 缩小
+  function zoomOut() {
+    currentZoom = Math.max(currentZoom - 0.2, 0.5);
+    updateZoom();
+  }
+  
+  // 重置缩放
+  function resetZoom() {
+    currentZoom = 1;
+    updateZoom();
+  }
+  
+  // 更新缩放
+  function updateZoom() {
+    viewerImage.style.transform = `scale(${currentZoom})`;
+  }
+  
+  // 为文章中的所有图片添加点击事件
+  function addImageClickEvents() {
+    const articleImages = document.querySelectorAll('.article-content img');
+    articleImages.forEach((img, index) => {
+      img.addEventListener('click', () => openViewer(index));
+    });
+  }
+  
+  // 事件监听器
+  closeBtn.addEventListener('click', closeViewer);
+  prevBtn.addEventListener('click', showPrevImage);
+  nextBtn.addEventListener('click', showNextImage);
+  zoomInBtn.addEventListener('click', zoomIn);
+  zoomOutBtn.addEventListener('click', zoomOut);
+  zoomResetBtn.addEventListener('click', resetZoom);
+  
+  // 点击背景关闭查看器
+  imageViewer.addEventListener('click', function(e) {
+    if (e.target === imageViewer) {
+      closeViewer();
+    }
+  });
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', function(e) {
+    if (imageViewer.classList.contains('hidden')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        closeViewer();
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
+      case 'ArrowRight':
+        showNextImage();
+        break;
+      case '+':
+      case '=':
+        zoomIn();
+        break;
+      case '-':
+      case '_':
+        zoomOut();
+        break;
+      case '0':
+        resetZoom();
+        break;
+    }
+  });
+  
+  // 滚轮缩放
+  imageViewer.addEventListener('wheel', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        zoomIn();
+      } else {
+        zoomOut();
+      }
+    }
+  });
+  
+  // 初始化
+  addImageClickEvents();
+  
+  // 监听内容变化（如果文章是动态加载的）
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList') {
+        addImageClickEvents();
+      }
+    });
+  });
+  
+  const articleContent = document.querySelector('.article-content');
+  if (articleContent) {
+    observer.observe(articleContent, {
+      childList: true,
+      subtree: true
+    });
+  }
+});
+</script>
 {{ end }}

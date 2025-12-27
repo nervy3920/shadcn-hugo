@@ -35,9 +35,10 @@
       </a>
     </div>
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-{{ .Site.Params.gridColumns | default 4 }}">
-      {{ $paginator := .Paginate (where .Site.RegularPages "Type" "posts") (.Site.Params.pagerSize | default 8) }}
+      {{ $gridColumns := .Site.Params.gridColumns | default 4 }}
+    {{ $paginator := .Paginate (where .Site.RegularPages "Type" "posts") (.Site.Params.pagerSize | default 8) }}
       {{ range $paginator.Pages }}
-        {{ partial "post-card.html" . }}
+        {{ partial "post-card.html" (dict "page" . "gridColumns" $gridColumns) }}
       {{ end }}
     </div>
     

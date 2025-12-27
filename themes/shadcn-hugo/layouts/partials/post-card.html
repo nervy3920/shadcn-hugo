@@ -1,37 +1,46 @@
+{{ $page := .page | default . }}
+{{ $gridColumns := .gridColumns | default $page.Site.Params.gridColumns | default 4 }}
 {{ $image := "" }}
-{{ with .Resources.GetMatch "featured-image*" }}
+{{ with $page.Resources.GetMatch "featured-image*" }}
   {{ $image = .RelPermalink }}
 {{ else }}
-  {{ $images := findRE "<img [^>]*src=\"([^\"]+)\"[^>]*>" .Content 1 }}
+  {{ $images := findRE "<img [^>]*src=\"([^\"]+)\"[^>]*>" $page.Content 1 }}
   {{ if ge (len $images) 1 }}
     {{ $image = (index $images 0 | replaceRE "<img [^>]*src=\"([^\"]+)\"[^>]*>" "$1") }}
   {{ end }}
 {{ end }}
 
+{{ $aspectRatio := cond (eq $gridColumns 1) "aspect-[3/1]" (cond (eq $gridColumns 2) "aspect-[3/2]" "aspect-video") }}
 <div class="group relative flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 h-full">
-  {{ if $image }}
-  <div class="aspect-video w-full overflow-hidden">
-    <img src="{{ $image }}" alt="{{ .Title }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+  <div class="{{ $aspectRatio }} w-full overflow-hidden bg-muted">
+    {{ if $image }}
+    <img src="{{ $image }}" alt="{{ $page.Title }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+    {{ else }}
+    <div class="h-full w-full flex items-center justify-center">
+      <svg class="w-16 h-16 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+    </div>
+    {{ end }}
   </div>
-  {{ end }}
   
   <div class="flex flex-1 flex-col p-6">
     <div class="flex flex-col space-y-1.5 mb-4">
       <div class="flex items-center gap-2 text-xs text-muted-foreground mb-1">
         <i class="fa-regular fa-calendar"></i>
-        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006年01月02日" }}</time>
+        <time datetime="{{ $page.Date.Format "2006-01-02" }}">{{ $page.Date.Format "2006年01月02日" }}</time>
       </div>
       <h3 class="text-xl font-bold leading-tight tracking-tight group-hover:text-primary transition-colors line-clamp-2">
-        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        <a href="{{ $page.RelPermalink }}">{{ $page.Title }}</a>
       </h3>
     </div>
     
     <div class="flex-1 text-sm text-muted-foreground line-clamp-3 mb-4">
-      {{ .Summary | plainify | truncate 100 }}
+      {{ $page.Summary | plainify | truncate 100 }}
     </div>
 
     <div class="flex flex-wrap gap-2 mt-auto pt-4 border-t">
-      {{ range .Params.tags }}
+      {{ range $page.Params.tags }}
         <a href="{{ "tags/" | relURL }}{{ . | urlize }}" class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground gap-1">
           <i class="fa-solid fa-tag text-[10px]"></i>
           {{ . }}
