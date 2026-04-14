@@ -29,6 +29,18 @@
   {{ end }}
 
   <script>
+    // Static-host-compatible short link entry: https://domain/#Ab12X
+    // Redirect early to resolver page to avoid requiring server-side rewrites.
+    (function () {
+      var hash = window.location.hash || '';
+      var code = hash.replace(/^#/, '').trim();
+      var isCode = /^[A-Za-z0-9]{5}$/.test(code);
+      var isResolverPage = window.location.pathname.indexOf('/tools/short-link/open/') === 0;
+      if (isCode && !isResolverPage) {
+        window.location.replace('/tools/short-link/open/?code=' + encodeURIComponent(code));
+      }
+    })();
+
     if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark')
     } else {

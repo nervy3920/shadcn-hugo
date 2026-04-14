@@ -1,0 +1,383 @@
+{{ define "main" }}
+<div class="flex flex-col md:flex-row w-full" style="height: 100vh; min-height: 600px;">
+  <!-- Left Sidebar: Controls & Editor -->
+  <div class="w-full md:w-1/3 lg:w-1/4 flex flex-col border-r border-border bg-card shadow-sm z-10">
+    
+    <!-- Header & Topic Input -->
+    <div class="p-4 border-b border-border space-y-4 flex-shrink-0">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-primary"></i>
+          {{ .Title }}
+        </h1>
+        <a href="/tools/" class="text-sm text-muted-foreground hover:text-foreground transition-colors" title="返回工具中心">
+          <i class="fa-solid fa-arrow-left"></i> 返回
+        </a>
+      </div>
+      
+      <div class="space-y-3">
+        <textarea id="mindmap-topic" rows="2" placeholder="输入主题，例如：运营一个博客的完整路径..." class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"></textarea>
+        
+        <div class="flex gap-2">
+          <button id="mindmap-generate" class="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+            AI 生成
+          </button>
+          <button id="mindmap-stop" class="inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent transition-colors" disabled title="停止生成">
+            <i class="fa-solid fa-stop"></i>
+          </button>
+        </div>
+      </div>
+      <div id="mindmap-message" class="hidden rounded-md border px-3 py-2 text-xs"></div>
+    </div>
+
+    <!-- Markdown Editor -->
+    <div class="flex-1 flex flex-col min-h-0">
+      <div class="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0">
+        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Markdown 源码编辑</span>
+      </div>
+      <textarea id="markdown-editor" class="flex-1 w-full p-4 resize-none outline-none text-sm font-mono bg-background text-foreground" placeholder="- 输入 Markdown 列表..."></textarea>
+    </div>
+  </div>
+
+  <!-- Right Main Area: Canvas -->
+  <div class="flex-1 relative flex flex-col bg-[#f2f3f7] min-h-[400px]" id="canvas-container">
+    <svg id="mindmap-canvas" class="flex-1 w-full h-full"></svg>
+    <div id="toolbar-container" class="absolute bottom-6 right-6 flex gap-1"></div>
+    
+    <div class="absolute top-4 right-4 flex gap-2">
+      <button id="mindmap-export-png" class="inline-flex items-center justify-center rounded-md bg-white border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm" disabled>
+        <i class="fa-solid fa-download mr-1.5"></i> 导出 PNG
+      </button>
+      <button id="mindmap-export-md" class="inline-flex items-center justify-center rounded-md bg-white border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm" disabled>
+          <i class="fa-brands fa-markdown mr-1.5"></i> 导出 MD
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.17.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.17.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-toolbar@0.17.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/markmap-toolbar@0.17.0/dist/style.css">
+<style>
+/* Adjust markmap colors to fit the theme */
+.markmap-node text {
+  font-family: inherit;
+}
+.markmap-toolbar {
+  background-color: white;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid hsl(var(--border));
+}
+/* Hide footer and header on this page for true full viewport height */
+body > div.relative.flex.min-h-screen.flex-col > footer {
+  display: none !important;
+}
+body > div.relative.flex.min-h-screen.flex-col > header {
+  display: none !important;
+}
+/* Ensure main container takes full width and height */
+body > div.relative.flex.min-h-screen.flex-col > main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Force main to take full height when header/footer are hidden */
+}
+
+/* Custom interactive styles for Markmap nodes */
+.markmap-node {
+  cursor: pointer;
+}
+.markmap-node:hover > rect,
+.markmap-node:hover > circle {
+  stroke: hsl(var(--primary)) !important;
+  stroke-width: 2px;
+}
+
+/* Inline editor styling */
+.mindmap-inline-editor {
+  position: absolute;
+  z-index: 40;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: hsl(var(--foreground));
+  border: 2px solid hsl(var(--primary));
+  border-radius: 6px;
+  background: white;
+  outline: none;
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.15), 0 0 0 2px hsl(var(--primary)/0.2);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.mindmap-inline-editor:focus {
+  box-shadow: 0 4px 16px -2px rgb(0 0 0 / 0.2), 0 0 0 3px hsl(var(--primary)/0.3);
+}
+</style>
+<script>
+(function () {
+  const backendBase = '{{ .Site.Params.backendURL }}'.replace(/\/$/, '');
+  let activeController = null;
+  let renderTimer = null;
+  let lastRawText = '';
+  let mm = null;
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function setButtonState(isLoading) {
+    byId('mindmap-generate').disabled = isLoading;
+    byId('mindmap-stop').disabled = isLoading === false;
+  }
+
+  function refreshExportButtons() {
+    const hasData = lastRawText.trim().length > 0;
+    byId('mindmap-export-png').disabled = hasData === false;
+    byId('mindmap-export-md').disabled = hasData === false;
+  }
+
+  function showMessage(text, type) {
+    const el = byId('mindmap-message');
+    el.textContent = text;
+    el.classList.remove('hidden', 'border-destructive/50', 'bg-destructive/10', 'text-destructive', 'border-green-400/30', 'bg-green-50/50', 'text-green-700', 'border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+    if (type === 'success') {
+      el.classList.add('border-green-400/30', 'bg-green-50/50', 'text-green-700');
+      return;
+    }
+    if (type === 'error') {
+      el.classList.add('border-destructive/50', 'bg-destructive/10', 'text-destructive');
+      return;
+    }
+    el.classList.add('border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+  }
+
+  async function getAuthHeaders() {
+    const resp = await fetch(backendBase + '/auth/challenge');
+    const data = await resp.json().catch(() => ({}));
+    if (resp.ok === false) {
+      throw new Error(data.message || 'auth challenge failed');
+    }
+    if (data.enabled === false) return {};
+    if (String(data.token || '').length === 0) {
+      throw new Error('auth token missing');
+    }
+    return { 'X-4A-Auth-Token': data.token };
+  }
+
+  function mountMind(markdownText) {
+    if (!window.markmap) {
+      showMessage('思维导图库加载失败。', 'error');
+      return;
+    }
+    const { Transformer, Markmap, loadCSS, loadJS } = window.markmap;
+    
+    if (!mm) {
+      const svg = byId('mindmap-canvas');
+      mm = Markmap.create(svg, {
+        autoFit: true,
+        fitRatio: 0.95,
+        duration: 300,
+        paddingX: 16
+      });
+      
+      const { Toolbar } = window.markmap;
+      if (Toolbar) {
+        const toolbar = new Toolbar();
+        toolbar.attach(mm);
+        byId('toolbar-container').appendChild(toolbar.render());
+      }
+    }
+    
+    let text = markdownText.trim();
+    if (!text) {
+      text = '# AI思维导图\n- 输入主题后点击生成';
+    } else {
+      if (text.startsWith('- ') || text.startsWith('* ')) {
+        text = '# ' + (byId('mindmap-topic').value.trim() || '思维导图') + '\n\n' + text;
+      }
+    }
+
+    const transformer = new Transformer();
+    const { root, features } = transformer.transform(text);
+    const { styles, scripts } = transformer.getUsedAssets(features);
+    if (styles) loadCSS(styles);
+    if (scripts) loadJS(scripts, { getMarkmap: () => window.markmap });
+
+    mm.setData(root);
+    mm.fit();
+    
+    if (document.activeElement !== byId('markdown-editor')) {
+      byId('markdown-editor').value = text;
+    }
+    
+    refreshExportButtons();
+  }
+
+  function scheduleRenderFromText() {
+    if (renderTimer) clearTimeout(renderTimer);
+    renderTimer = setTimeout(function () {
+      mountMind(lastRawText);
+    }, 50); // Fast debounce to show stream instantly
+  }
+
+  function downloadBlob(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportPng() {
+    const svgRoot = byId('mindmap-canvas');
+    if (!window.html2canvas) {
+      showMessage('导出失败：缺少导出依赖。', 'error');
+      return;
+    }
+
+    const container = svgRoot.parentElement;
+    
+    // Temporarily hide action buttons during export
+    const actionButtons = container.querySelector('.absolute.top-4.right-4');
+    if (actionButtons) actionButtons.style.display = 'none';
+    
+    try {
+      const canvas = await window.html2canvas(container, {
+        backgroundColor: '#f2f3f7',
+        useCORS: true,
+        scale: 2,
+        ignoreElements: (el) => el.id === 'toolbar-container'
+      });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (blob) {
+        downloadBlob('mindmap.png', blob);
+        showMessage('已导出 PNG。', 'success');
+      } else {
+        showMessage('导出失败，请重试。', 'error');
+      }
+    } catch (e) {
+       console.error(e);
+       showMessage('导出失败，请重试。', 'error');
+    } finally {
+       if (actionButtons) actionButtons.style.display = '';
+    }
+  }
+
+  function exportMd() {
+    if (!lastRawText.trim()) return;
+    const blob = new Blob([byId('markdown-editor').value], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob('mindmap.md', blob);
+    showMessage('已导出 Markdown。', 'success');
+  }
+
+  async function runGenerate() {
+    const topic = byId('mindmap-topic').value.trim();
+    if (topic.length === 0) {
+      showMessage('请输入思维导图主题。', 'error');
+      return;
+    }
+
+    if (backendBase.length === 0) {
+      showMessage('请先在 hugo.toml 的 params.backendURL 配置后端地址。', 'error');
+      return;
+    }
+
+    setButtonState(true);
+    showMessage('正在流式生成导图...', 'normal');
+
+    try {
+      const authHeaders = await getAuthHeaders();
+      const controller = new AbortController();
+      activeController = controller;
+      lastRawText = '';
+      mountMind('# ' + topic + '\n- 加载中...'); // Reset
+
+      const response = await fetch(backendBase + '/api/ai/mindmap/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ topic }),
+        signal: controller.signal,
+      });
+
+      if (response.ok === false) {
+        const errText = await response.text();
+        let message = '请求失败';
+        try {
+          const parsed = errText ? JSON.parse(errText) : {};
+          message = parsed.message || message;
+        } catch (_err) {
+          message = errText || message;
+        }
+        showMessage(message, 'error');
+        return;
+      }
+
+      const reader = response.body ? response.body.getReader() : null;
+      if (reader == null) {
+        showMessage('流式响应不可用，请检查后端。', 'error');
+        return;
+      }
+
+      const decoder = new TextDecoder('utf-8');
+
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        const part = decoder.decode(chunk.value, { stream: true });
+        lastRawText += part;
+        scheduleRenderFromText();
+      }
+
+      const remain = decoder.decode();
+      if (remain.length > 0) {
+        lastRawText += remain;
+      }
+
+      mountMind(lastRawText);
+      showMessage('导图已生成。', 'success');
+
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        showMessage('已停止生成。', 'normal');
+      } else {
+        showMessage('生成失败，请稍后重试。', 'error');
+      }
+    } finally {
+      activeController = null;
+      setButtonState(false);
+      refreshExportButtons();
+    }
+  }
+
+  // Handle manual edits
+  byId('markdown-editor').addEventListener('input', function(e) {
+      lastRawText = e.target.value;
+      scheduleRenderFromText();
+  });
+
+  byId('mindmap-generate').addEventListener('click', runGenerate);
+  byId('mindmap-stop').addEventListener('click', function () {
+    if (activeController) activeController.abort();
+  });
+  byId('mindmap-export-png').addEventListener('click', exportPng);
+  byId('mindmap-export-md').addEventListener('click', exportMd);
+
+  // Initial mount
+  const initText = '# AI思维导图\n- 输入主题后点击生成\n- 支持左侧实时编辑 Markdown，右侧会同步更新导图\n- 支持鼠标拖动画布\n  - 滚轮缩放\n  - 点击节点圆圈展开/折叠';
+  lastRawText = initText;
+  mountMind(initText);
+  byId('markdown-editor').value = initText;
+  
+  // Resize handler for Canvas fit
+  window.addEventListener('resize', () => {
+    if (mm) {
+      setTimeout(() => mm.fit(), 100);
+    }
+  });
+})();
+</script>
+{{ end }}

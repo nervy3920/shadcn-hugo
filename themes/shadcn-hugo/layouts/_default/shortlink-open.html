@@ -1,0 +1,58 @@
+<html lang="{{ .Site.LanguageCode | default "zh-cn" }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>短链跳转中...</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <script>
+  (function () {
+    var backendBase = '{{ .Site.Params.backendURL }}'.replace(/\/$/, '');
+    var params = new URLSearchParams(window.location.search);
+    var code = (params.get('code') || '').trim();
+    var codePattern = /^[a-zA-Z0-9]{5}$/;
+
+    function go(path) {
+      window.location.replace(path);
+    }
+
+    if (codePattern.test(code) === false) {
+      go('/tools/short-link/not-found/');
+      return;
+    }
+
+    fetch(backendBase + '/api/resolve/' + encodeURIComponent(code))
+      .then(function (resp) {
+        if (resp.status === 404) {
+          go('/tools/short-link/not-found/?code=' + encodeURIComponent(code));
+          return null;
+        }
+        if (resp.status === 410) {
+          go('/tools/short-link/burned/?code=' + encodeURIComponent(code));
+          return null;
+        }
+        if (resp.status === 401) {
+          go('/tools/short-link/unlock/?code=' + encodeURIComponent(code));
+          return null;
+        }
+        if (resp.ok === false) {
+          go('/tools/short-link/not-found/?code=' + encodeURIComponent(code));
+          return null;
+        }
+        return resp.json();
+      })
+      .then(function (data) {
+        if (data == null) return;
+        if (data.targetUrl) {
+          window.location.replace(data.targetUrl);
+          return;
+        }
+        go('/tools/short-link/not-found/?code=' + encodeURIComponent(code));
+      })
+      .catch(function () {
+        go('/tools/short-link/not-found/?code=' + encodeURIComponent(code));
+      });
+  })();
+  </script>
+</head>
+<body></body>
+</html>

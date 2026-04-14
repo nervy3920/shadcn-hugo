@@ -1,0 +1,225 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="mx-auto max-w-[980px] space-y-8">
+    <a href="/tools/" class="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors">
+      <i class="fa-solid fa-arrow-left"></i>
+      返回工具中心
+    </a>
+    <div class="space-y-2">
+      <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
+        <i class="fa-solid fa-hard-drive text-primary"></i>
+        {{ .Title }}
+      </h1>
+      <p class="text-lg text-muted-foreground">{{ .Description | default "按关键词搜索网盘资源，支持多类型链接聚合展示。" }}</p>
+    </div>
+
+    <div class="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+        <input id="pan-kw" type="text" placeholder="输入关键词，例如：电影名 / 课程名 / 软件名" class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        <button id="pan-search-btn" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors gap-2">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          搜索资源
+        </button>
+      </div>
+      <div id="pan-message" class="hidden rounded-md border px-3 py-2 text-sm"></div>
+    </div>
+
+    <div id="pan-summary" class="hidden rounded-xl border bg-background/70 p-4 text-sm text-muted-foreground"></div>
+
+    <section id="pan-merged-wrap" class="hidden space-y-3">
+      <h2 class="text-xl font-semibold tracking-tight flex items-center gap-2">
+        <i class="fa-solid fa-layer-group text-primary"></i>
+        按网盘类型聚合
+      </h2>
+      <div class="rounded-xl border bg-card">
+        <div id="pan-type-tabs" class="flex flex-wrap gap-2 border-b p-3"></div>
+        <div id="pan-merged" class="p-3 md:p-4"></div>
+      </div>
+    </section>
+    <div id="pan-empty" class="rounded-xl border bg-background/70 p-6 text-sm text-muted-foreground">请输入关键词开始搜索。</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const backendBase = '{{ .Site.Params.backendURL }}'.replace(/\/$/, '');
+  let activePanType = '';
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function esc(value) {
+    return String(value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+
+  async function getAuthHeaders() {
+    const resp = await fetch(backendBase + '/auth/challenge');
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      throw new Error(data.message || "auth challenge failed");
+    }
+    if (!data.enabled) return {};
+    if (!data.token) {
+      throw new Error("auth token missing");
+    }
+    return { "X-4A-Auth-Token": data.token };
+  }
+
+  function showMessage(text, type) {
+    const el = byId('pan-message');
+    el.textContent = text;
+    el.classList.remove('hidden', 'border-red-400/30', 'bg-red-50/50', 'text-red-700', 'border-green-400/30', 'bg-green-50/50', 'text-green-700', 'border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+
+    if (type === 'error') {
+      el.classList.add('border-red-400/30', 'bg-red-50/50', 'text-red-700');
+      return;
+    }
+    if (type === 'success') {
+      el.classList.add('border-green-400/30', 'bg-green-50/50', 'text-green-700');
+      return;
+    }
+
+    el.classList.add('border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+  }
+
+  function clearMessage() {
+    const el = byId('pan-message');
+    el.classList.add('hidden');
+    el.textContent = '';
+  }
+
+  function renderMerged(merged) {
+    const wrap = byId('pan-merged-wrap');
+    const tabs = byId('pan-type-tabs');
+    const root = byId('pan-merged');
+    const types = Object.keys(merged || {}).sort((a, b) => {
+      const ac = Array.isArray(merged[a]) ? merged[a].length : 0;
+      const bc = Array.isArray(merged[b]) ? merged[b].length : 0;
+      return bc - ac;
+    });
+
+    if (!types.length) {
+      wrap.classList.add('hidden');
+      tabs.innerHTML = '';
+      root.innerHTML = '';
+      return;
+    }
+
+    if (!activePanType || !types.includes(activePanType)) {
+      activePanType = types[0];
+    }
+
+    tabs.innerHTML = types.map((type) => {
+      const rows = Array.isArray(merged[type]) ? merged[type] : [];
+      const active = type === activePanType;
+      return `
+        <button
+          type="button"
+          data-pan-type="${esc(type)}"
+          class="rounded-md border px-3 py-1.5 text-sm transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent'}"
+        >
+          ${esc(type)} (${rows.length})
+        </button>
+      `;
+    }).join('');
+
+    const rows = Array.isArray(merged[activePanType]) ? merged[activePanType] : [];
+    root.innerHTML = rows.length ? `
+      <div class="space-y-2">
+        ${rows.map((item) => `
+          <div class="rounded-md border bg-background p-3 text-sm space-y-1">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs text-muted-foreground">${esc(item.source || '')}${item.datetime ? ' · ' + esc(item.datetime) : ''}</span>
+              <span class="text-xs text-emerald-600">${item.password ? '提取码: ' + esc(item.password) : ''}</span>
+            </div>
+            <div class="text-foreground">${esc(item.note || '')}</div>
+            <a href="${esc(item.url)}" target="_blank" rel="noreferrer" class="text-primary hover:underline break-all">${esc(item.url)}</a>
+          </div>
+        `).join('')}
+      </div>
+    ` : '<div class="text-sm text-muted-foreground">该类型暂无可展示链接。</div>';
+
+    wrap.classList.remove('hidden');
+  }
+
+  function renderResults(data) {
+    window.__PAN_LAST_DATA__ = data;
+    const total = Number(data.total || 0);
+    const merged = data.merged_by_type || {};
+    const typeCount = Object.keys(merged).length;
+
+    const summary = byId('pan-summary');
+    const empty = byId('pan-empty');
+
+    summary.textContent = `共找到 ${total} 条结果，按 ${typeCount} 种网盘类型聚合展示。`;
+    summary.classList.remove('hidden');
+
+    if (!typeCount) {
+      empty.textContent = '未找到匹配结果，请尝试更换关键词。';
+      empty.classList.remove('hidden');
+      renderMerged({});
+      return;
+    }
+
+    empty.classList.add('hidden');
+    renderMerged(merged);
+  }
+
+  async function runSearch() {
+    const kw = byId('pan-kw').value.trim();
+    if (!kw) {
+      showMessage('请输入关键词。', 'error');
+      return;
+    }
+
+    clearMessage();
+    byId('pan-search-btn').disabled = true;
+    byId('pan-search-btn').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 搜索中...';
+
+    try {
+      const authHeaders = await getAuthHeaders();
+      const resp = await fetch(backendBase + '/api/pan-search?kw=' + encodeURIComponent(kw), { headers: authHeaders });
+      const data = await resp.json();
+      if (!resp.ok) {
+        showMessage(data.message || '搜索失败，请稍后重试。', 'error');
+        return;
+      }
+      renderResults(data);
+      showMessage('搜索完成。', 'success');
+    } catch (err) {
+      showMessage('无法连接后端搜索服务。', 'error');
+    } finally {
+      byId('pan-search-btn').disabled = false;
+      byId('pan-search-btn').innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> 搜索资源';
+    }
+  }
+
+  byId('pan-search-btn').addEventListener('click', runSearch);
+  byId('pan-kw').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') runSearch();
+  });
+  byId('pan-type-tabs').addEventListener('click', function (e) {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    const t = target.getAttribute('data-pan-type');
+    if (!t) return;
+    activePanType = t;
+    const summaryText = byId('pan-summary').textContent;
+    const mergedWrapVisible = !byId('pan-merged-wrap').classList.contains('hidden');
+    if (mergedWrapVisible && summaryText) {
+      // re-render with existing merged data kept in window state
+      if (window.__PAN_LAST_DATA__) {
+        renderMerged(window.__PAN_LAST_DATA__.merged_by_type || {});
+      }
+    }
+  });
+})();
+</script>
+{{ end }}

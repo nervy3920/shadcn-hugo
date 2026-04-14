@@ -1,0 +1,122 @@
+{{ define "main" }}
+<div class="container py-16">
+  <div class="mx-auto max-w-2xl rounded-xl border bg-card p-8 shadow-sm space-y-6">
+    <div class="text-center space-y-2">
+      <div class="mx-auto h-14 w-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight">短链接需要密码</h1>
+      <p class="text-muted-foreground">请输入该短链接的访问密码，验证通过后将自动跳转。</p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="space-y-2">
+        <label for="unlock-code" class="text-sm font-medium">短链 code（5 位）</label>
+        <input id="unlock-code" type="text" maxlength="5" placeholder="例如 Ab12X" class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+      </div>
+
+      <div class="space-y-2">
+        <label for="unlock-password" class="text-sm font-medium">访问密码</label>
+        <input id="unlock-password" type="password" placeholder="输入短链接密码" class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+      </div>
+
+      <button id="unlock-submit" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+        验证并访问
+      </button>
+
+      <div id="unlock-message" class="hidden rounded-md border px-3 py-2 text-sm"></div>
+    </div>
+
+    <div class="pt-2 flex flex-wrap items-center gap-3 text-sm">
+      <a href="/tools/short-link/" class="inline-flex items-center rounded-md border px-3 py-1.5 font-medium hover:bg-accent transition-colors">返回短链接工具</a>
+      <a href="/tools/short-link/not-found/" class="text-muted-foreground hover:text-foreground transition-colors">链接不存在？</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const backendBase = '{{ .Site.Params.backendURL }}'.replace(/\/$/, '');
+  const codePattern = /^[a-zA-Z0-9]{5}$/;
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function showMessage(text, type) {
+    const el = byId('unlock-message');
+    el.textContent = text;
+    el.classList.remove('hidden', 'border-red-400/30', 'bg-red-50/50', 'text-red-700', 'border-green-400/30', 'bg-green-50/50', 'text-green-700', 'border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+    if (type === 'success') {
+      el.classList.add('border-green-400/30', 'bg-green-50/50', 'text-green-700');
+      return;
+    }
+    if (type === 'error') {
+      el.classList.add('border-red-400/30', 'bg-red-50/50', 'text-red-700');
+      return;
+    }
+    el.classList.add('border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+  }
+
+  async function submitUnlock() {
+    const code = byId('unlock-code').value.trim();
+    const password = byId('unlock-password').value.trim();
+
+    if (codePattern.test(code) === false) {
+      showMessage('请输入有效的 5 位短链 code。', 'error');
+      return;
+    }
+
+    if (password.length === 0) {
+      showMessage('请输入访问密码。', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(backendBase + '/api/short-links/' + encodeURIComponent(code) + '/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 404) {
+        window.location.href = '/tools/short-link/not-found/?code=' + encodeURIComponent(code);
+        return;
+      }
+
+      if (response.status === 410) {
+        window.location.href = '/tools/short-link/burned/?code=' + encodeURIComponent(code);
+        return;
+      }
+
+      if (response.status === 401) {
+        showMessage('密码错误，请重新输入。', 'error');
+        return;
+      }
+
+      if (response.ok === false) {
+        showMessage(data.message || '验证失败，请稍后重试。', 'error');
+        return;
+      }
+
+      showMessage('验证通过，正在跳转...', 'success');
+      window.location.href = data.targetUrl;
+    } catch (err) {
+      showMessage('无法连接后端服务，请稍后重试。', 'error');
+    }
+  }
+
+  const queryCode = (new URLSearchParams(window.location.search).get('code') || '').trim();
+  if (codePattern.test(queryCode)) {
+    byId('unlock-code').value = queryCode;
+  }
+
+  byId('unlock-submit').addEventListener('click', submitUnlock);
+  byId('unlock-password').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') submitUnlock();
+  });
+})();
+</script>
+{{ end }}

@@ -11,7 +11,7 @@
 {{ end }}
 
 {{ $aspectRatio := cond (eq $gridColumns 1) "aspect-[3/1]" (cond (eq $gridColumns 2) "aspect-[3/2]" "aspect-video") }}
-<div class="group relative flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 h-full">
+<div class="post-card-shell group relative flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 h-full">
   <div class="{{ $aspectRatio }} w-full overflow-hidden bg-muted">
     {{ if $image }}
     <img src="{{ $image }}" alt="{{ $page.Title }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">

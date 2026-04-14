@@ -1,0 +1,309 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="mx-auto max-w-[980px] space-y-8">
+    <a href="/tools/" class="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors">
+      <i class="fa-solid fa-arrow-left"></i>
+      返回工具中心
+    </a>
+    <div class="space-y-2">
+      <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
+        <i class="fa-solid fa-link text-primary"></i>
+        {{ .Title }}
+      </h1>
+      <p class="text-lg text-muted-foreground">{{ .Description | default "输入长链接生成 5 位随机短链。" }}</p>
+    </div>
+
+    <div class="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm space-y-5">
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_35%)]"></div>
+      <div class="relative space-y-5">
+      <div class="space-y-2">
+        <label for="long-url" class="text-sm font-medium">长链接</label>
+        <input id="long-url" type="url" placeholder="https://example.com/article?id=100" class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+          <label for="password" class="text-sm font-medium">访问密码（可选）</label>
+          <input id="password" type="password" placeholder="设置后访问需输入密码" class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+
+        <label class="mt-7 inline-flex items-center gap-2 text-sm font-medium cursor-pointer">
+          <input id="burn-after-read" type="checkbox" class="h-4 w-4 rounded border" />
+          阅后即焚
+        </label>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="create-short-link" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+          生成短链接
+        </button>
+        <span class="text-xs text-muted-foreground">短链格式：`域名/#Ab12X`</span>
+      </div>
+
+      <div id="create-message" class="hidden rounded-md border border-amber-400/30 bg-amber-50/50 px-3 py-2 text-sm text-amber-700"></div>
+
+      <div id="create-result" class="hidden rounded-xl border border-emerald-400/40 bg-emerald-50/40 p-4 md:p-5 space-y-3">
+        <div class="flex items-center gap-2 text-sm font-medium text-emerald-700">
+          <i class="fa-solid fa-circle-check"></i>
+          生成成功
+        </div>
+        <a id="short-link-output" href="#" target="_blank" rel="noopener noreferrer" class="block rounded-lg border bg-background px-3 py-2 md:px-4 md:py-3 font-semibold break-all text-primary hover:underline underline-offset-4 transition-colors"></a>
+        <div class="flex flex-wrap gap-2">
+          <button id="copy-short-link" class="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors gap-1.5">
+            <i class="fa-regular fa-copy"></i>
+            复制链接
+          </button>
+          <a id="visit-short-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors gap-1.5">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            访问链接
+          </a>
+        </div>
+      </div>
+
+      <div class="rounded-xl border bg-background/80 p-4 md:p-5 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+            历史生成记录（本地缓存）
+          </div>
+          <button id="clear-history" class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium hover:bg-accent transition-colors">
+            清空记录
+          </button>
+        </div>
+        <div id="history-empty" class="text-sm text-muted-foreground">暂无记录，生成成功后会自动出现在这里。</div>
+        <div id="history-list" class="hidden space-y-2"></div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const backendBase = '{{ .Site.Params.backendURL }}'.replace(/\/$/, '');
+  const HISTORY_KEY = 'shortlink_history_v1';
+  const MAX_HISTORY = 20;
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function escapeHtml(value) {
+    return (value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function readHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed;
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function writeHistory(list) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, MAX_HISTORY)));
+  }
+
+  function saveHistory(item) {
+    const old = readHistory();
+    const filtered = old.filter((it) => it.shortUrl !== item.shortUrl);
+    filtered.unshift(item);
+    writeHistory(filtered);
+  }
+
+  function formatTime(iso) {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString();
+  }
+
+  function renderHistory() {
+    const list = readHistory();
+    const emptyEl = byId('history-empty');
+    const listEl = byId('history-list');
+    if (!listEl || !emptyEl) return;
+
+    if (list.length === 0) {
+      emptyEl.classList.remove('hidden');
+      listEl.classList.add('hidden');
+      listEl.innerHTML = '';
+      return;
+    }
+
+    emptyEl.classList.add('hidden');
+    listEl.classList.remove('hidden');
+    listEl.innerHTML = list.map((item, idx) => {
+      const safeShort = escapeHtml(item.shortUrl);
+      const safeLong = escapeHtml(item.longUrl || '');
+      const safeTime = escapeHtml(formatTime(item.createdAt));
+      const hasPassword = item.hasPassword ? '<span class="rounded-full border px-2 py-0.5 text-[10px]">密码</span>' : '';
+      const burnAfterRead = item.burnAfterRead ? '<span class="rounded-full border px-2 py-0.5 text-[10px]">阅后即焚</span>' : '';
+      return `
+        <div class="rounded-lg border bg-card p-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <a href="${safeShort}" target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline break-all">${safeShort}</a>
+            <div class="flex items-center gap-1.5 text-muted-foreground">${hasPassword}${burnAfterRead}</div>
+          </div>
+          <p class="mt-1 text-xs text-muted-foreground break-all">${safeLong}</p>
+          <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-[11px] text-muted-foreground">${safeTime}</span>
+            <div class="flex gap-2">
+              <button type="button" data-history-copy="${idx}" class="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent transition-colors">复制</button>
+              <a href="${safeShort}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent transition-colors">访问</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function copyText(value) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const area = document.createElement('textarea');
+    area.value = value;
+    area.setAttribute('readonly', 'readonly');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(area);
+    if (!ok) {
+      throw new Error('copy failed');
+    }
+  }
+
+
+  async function getAuthHeaders() {
+    const resp = await fetch(backendBase + '/auth/challenge');
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      throw new Error(data.message || "auth challenge failed");
+    }
+    if (!data.enabled) return {};
+    if (!data.token) {
+      throw new Error("auth token missing");
+    }
+    return { "X-4A-Auth-Token": data.token };
+  }
+
+  function showMessage(el, text, type) {
+    el.textContent = text;
+    el.classList.remove('hidden', 'border-amber-400/30', 'bg-amber-50/50', 'text-amber-700', 'border-green-400/30', 'bg-green-50/50', 'text-green-700', 'border-red-400/30', 'bg-red-50/50', 'text-red-700');
+    if (type === 'success') {
+      el.classList.add('border-green-400/30', 'bg-green-50/50', 'text-green-700');
+      return;
+    }
+    if (type === 'error') {
+      el.classList.add('border-red-400/30', 'bg-red-50/50', 'text-red-700');
+      return;
+    }
+    el.classList.add('border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+  }
+
+  async function createShortLink() {
+    const longUrl = byId('long-url').value.trim();
+    const password = byId('password').value.trim();
+    const burnAfterRead = byId('burn-after-read').checked;
+    const messageEl = byId('create-message');
+    const resultEl = byId('create-result');
+
+    resultEl.classList.add('hidden');
+
+    if (!longUrl) {
+      showMessage(messageEl, '请先输入长链接。', 'error');
+      return;
+    }
+
+    try {
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(backendBase + '/api/short-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          url: longUrl,
+          password,
+          burnAfterRead,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        showMessage(messageEl, data.message || '创建失败，请稍后重试。', 'error');
+        return;
+      }
+
+      const finalShortUrl = data.shortUrl || (`${window.location.origin}/#` + encodeURIComponent(data.code || ''));
+      showMessage(messageEl, '短链接创建成功。', 'success');
+      byId('short-link-output').textContent = finalShortUrl;
+      byId('short-link-output').href = finalShortUrl;
+      byId('visit-short-link').href = finalShortUrl;
+      saveHistory({
+        shortUrl: finalShortUrl,
+        longUrl: longUrl,
+        hasPassword: Boolean(password),
+        burnAfterRead: burnAfterRead,
+        createdAt: new Date().toISOString(),
+      });
+      renderHistory();
+      resultEl.classList.remove('hidden');
+    } catch (err) {
+      showMessage(messageEl, '无法连接后端服务，请检查 backendURL 配置。', 'error');
+    }
+  }
+
+  function bindEvents() {
+    byId('create-short-link').addEventListener('click', createShortLink);
+    byId('copy-short-link').addEventListener('click', async function () {
+      const value = byId('short-link-output').textContent.trim();
+      if (!value) return;
+      try {
+        await copyText(value);
+        showMessage(byId('create-message'), '短链接已复制到剪贴板。', 'success');
+      } catch (err) {
+        showMessage(byId('create-message'), '复制失败，请手动复制上方短链。', 'error');
+      }
+    });
+
+    byId('clear-history').addEventListener('click', function () {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+      showMessage(byId('create-message'), '历史记录已清空。', 'success');
+    });
+
+    byId('history-list').addEventListener('click', async function (event) {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const idx = target.getAttribute('data-history-copy');
+      if (idx === null) return;
+
+      const item = readHistory()[Number(idx)];
+      if (!item || !item.shortUrl) return;
+      try {
+        await copyText(item.shortUrl);
+        showMessage(byId('create-message'), '已复制历史短链。', 'success');
+      } catch (err) {
+        showMessage(byId('create-message'), '复制失败，请手动复制。', 'error');
+      }
+    });
+  }
+
+  renderHistory();
+  bindEvents();
+})();
+</script>
+{{ end }}

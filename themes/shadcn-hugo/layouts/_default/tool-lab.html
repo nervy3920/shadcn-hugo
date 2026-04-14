@@ -1,0 +1,756 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="mx-auto max-w-[980px] space-y-8">
+    <a href="/tools/" class="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors">
+      <i class="fa-solid fa-arrow-left"></i>
+      返回工具中心
+    </a>
+    <section class="relative overflow-hidden rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-sky-500/10"></div>
+      <div class="relative space-y-3">
+        <div class="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+          <i class="fa-solid {{ .Params.toolIcon | default "fa-screwdriver-wrench" }} text-primary"></i>
+          纯前端工具 · 本地处理
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight md:text-4xl">{{ .Title }}</h1>
+        <p class="text-lg text-muted-foreground">{{ .Description }}</p>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border bg-card p-5 md:p-6 shadow-sm space-y-4">
+      <div id="tool-root"></div>
+      <div id="tool-msg" class="hidden rounded-lg border px-3 py-2 text-sm"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  const toolKey = '{{ .Params.toolKey }}';
+  const root = document.getElementById('tool-root');
+  const msgEl = document.getElementById('tool-msg');
+
+  function byId(id) { return document.getElementById(id); }
+  function esc(v) {
+    return String(v || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+  function showMsg(text, type) {
+    msgEl.textContent = text;
+    msgEl.classList.remove('hidden', 'border-red-400/30', 'bg-red-50/50', 'text-red-700', 'border-green-400/30', 'bg-green-50/50', 'text-green-700', 'border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+    if (type === 'error') {
+      msgEl.classList.add('border-red-400/30', 'bg-red-50/50', 'text-red-700');
+      return;
+    }
+    if (type === 'success') {
+      msgEl.classList.add('border-green-400/30', 'bg-green-50/50', 'text-green-700');
+      return;
+    }
+    msgEl.classList.add('border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+  }
+  function clearMsg() {
+    msgEl.classList.add('hidden');
+    msgEl.textContent = '';
+  }
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (!ok) throw new Error('copy failed');
+  }
+  function labInput(extra) {
+    return 'rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring ' + (extra || '');
+  }
+  function labBtn(primary) {
+    if (primary) return 'rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors';
+    return 'rounded-xl border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors';
+  }
+
+  const tools = {
+    'uuid-generator': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-4">
+            <div class="grid gap-3 md:grid-cols-4">
+              <label class="text-sm font-medium md:self-center">数量</label>
+              <input id="uuid-count" type="number" min="1" max="300" value="20" class="${labInput('md:col-span-1')}" />
+              <label class="inline-flex items-center gap-2 text-sm"><input id="uuid-upper" type="checkbox" class="h-4 w-4 rounded border" /> 大写</label>
+              <label class="inline-flex items-center gap-2 text-sm"><input id="uuid-nohyphen" type="checkbox" class="h-4 w-4 rounded border" /> 去掉连接符</label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="uuid-gen" class="${labBtn(true)}">生成 UUID</button>
+              <button id="uuid-copy" class="${labBtn(false)}">复制全部</button>
+              <button id="uuid-clear" class="${labBtn(false)}">清空</button>
+              <span id="uuid-stat" class="inline-flex items-center rounded-full border px-3 py-1 text-xs text-muted-foreground">0 条</span>
+            </div>
+            <textarea id="uuid-output" rows="12" class="w-full ${labInput('font-mono')}" placeholder="生成结果..."></textarea>
+          </div>
+        `;
+      },
+      bind: function () {
+        function genOne() {
+          const raw = crypto.randomUUID ? crypto.randomUUID() : (function () {
+            const a = crypto.getRandomValues(new Uint8Array(16));
+            a[6] = (a[6] & 0x0f) | 0x40;
+            a[8] = (a[8] & 0x3f) | 0x80;
+            const h = Array.from(a, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+            return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+          })();
+          return raw;
+        }
+        byId('uuid-gen').addEventListener('click', function () {
+          clearMsg();
+          const n = Math.max(1, Math.min(300, Number(byId('uuid-count').value || 1)));
+          const upper = byId('uuid-upper').checked;
+          const nohyphen = byId('uuid-nohyphen').checked;
+          const list = [];
+          for (let i = 0; i < n; i++) {
+            let u = genOne();
+            if (nohyphen) u = u.replaceAll('-', '');
+            if (upper) u = u.toUpperCase();
+            list.push(u);
+          }
+          byId('uuid-output').value = list.join('\n');
+          byId('uuid-stat').textContent = n + ' 条';
+          showMsg('生成成功。', 'success');
+        });
+        byId('uuid-copy').addEventListener('click', async function () {
+          const v = byId('uuid-output').value.trim();
+          if (!v) return showMsg('没有可复制内容。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+        byId('uuid-clear').addEventListener('click', function () {
+          byId('uuid-output').value = '';
+          byId('uuid-stat').textContent = '0 条';
+          clearMsg();
+        });
+      }
+    },
+
+    'password-generator': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-4">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label class="rounded-xl border bg-background p-3 text-sm">
+                <span class="font-medium">长度</span>
+                <input id="pwd-len" type="number" min="4" max="128" value="16" class="mt-2 w-full rounded border bg-background px-2 py-1" />
+              </label>
+              <label class="rounded-xl border bg-background p-3 text-sm flex items-center gap-2"><input id="pwd-upper" type="checkbox" checked> 大写</label>
+              <label class="rounded-xl border bg-background p-3 text-sm flex items-center gap-2"><input id="pwd-lower" type="checkbox" checked> 小写</label>
+              <label class="rounded-xl border bg-background p-3 text-sm flex items-center gap-2"><input id="pwd-num" type="checkbox" checked> 数字</label>
+              <label class="rounded-xl border bg-background p-3 text-sm flex items-center gap-2 sm:col-span-2 lg:col-span-4"><input id="pwd-symbol" type="checkbox" checked> 特殊字符 !@#$%^&*</label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="pwd-gen" class="${labBtn(true)}">生成密码</button>
+              <button id="pwd-copy" class="${labBtn(false)}">复制</button>
+              <button id="pwd-refresh" class="${labBtn(false)}">再来一个</button>
+            </div>
+            <input id="pwd-output" type="text" class="w-full ${labInput('font-mono')}" placeholder="生成结果" />
+          </div>
+        `;
+      },
+      bind: function () {
+        function pick(str) {
+          const arr = crypto.getRandomValues(new Uint32Array(1));
+          return str[arr[0] % str.length];
+        }
+        function shuffle(arr) {
+          for (let i = arr.length - 1; i > 0; i--) {
+            const r = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+            const t = arr[i]; arr[i] = arr[r]; arr[r] = t;
+          }
+          return arr;
+        }
+        function generate() {
+          const len = Math.max(4, Math.min(128, Number(byId('pwd-len').value || 16)));
+          const pools = [];
+          if (byId('pwd-upper').checked) pools.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+          if (byId('pwd-lower').checked) pools.push('abcdefghijklmnopqrstuvwxyz');
+          if (byId('pwd-num').checked) pools.push('0123456789');
+          if (byId('pwd-symbol').checked) pools.push('!@#$%^&*()-_=+[]{};:,.?/');
+          if (!pools.length) throw new Error('至少选择一个字符类型。');
+          const all = pools.join('');
+          const out = [];
+          pools.forEach(function (p) { out.push(pick(p)); });
+          while (out.length < len) out.push(pick(all));
+          return shuffle(out).join('');
+        }
+        function runGenerate() {
+          clearMsg();
+          try {
+            byId('pwd-output').value = generate();
+            showMsg('已生成随机密码。', 'success');
+          } catch (e) {
+            showMsg(e.message || '生成失败。', 'error');
+          }
+        }
+        byId('pwd-gen').addEventListener('click', runGenerate);
+        byId('pwd-refresh').addEventListener('click', runGenerate);
+        byId('pwd-copy').addEventListener('click', async function () {
+          const v = byId('pwd-output').value.trim();
+          if (!v) return showMsg('请先生成密码。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    },
+
+    'json-format': {
+      render: function () {
+        root.innerHTML = `
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="space-y-2">
+              <label class="text-sm font-medium">输入 JSON</label>
+              <textarea id="json-in" rows="14" class="w-full ${labInput('font-mono')}" placeholder='{"name":"demo"}'></textarea>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium">输出</label>
+              <textarea id="json-out" rows="14" class="w-full ${labInput('font-mono')}" placeholder="格式化结果"></textarea>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button id="json-validate" class="${labBtn(false)}">校验</button>
+            <button id="json-pretty" class="${labBtn(true)}">美化</button>
+            <button id="json-min" class="${labBtn(false)}">压缩</button>
+            <button id="json-sort" class="${labBtn(false)}">按键排序</button>
+            <button id="json-copy" class="${labBtn(false)}">复制输出</button>
+          </div>
+        `;
+      },
+      bind: function () {
+        function parseInput() {
+          const raw = byId('json-in').value.trim() || byId('json-out').value.trim();
+          if (!raw) throw new Error('请输入 JSON 文本。');
+          return JSON.parse(raw);
+        }
+        function sortObject(v) {
+          if (Array.isArray(v)) return v.map(sortObject);
+          if (v && typeof v === 'object') {
+            const out = {};
+            Object.keys(v).sort().forEach(function (k) { out[k] = sortObject(v[k]); });
+            return out;
+          }
+          return v;
+        }
+        byId('json-validate').addEventListener('click', function () {
+          try { parseInput(); showMsg('JSON 格式正确。', 'success'); } catch (e) { showMsg(e.message || 'JSON 格式错误。', 'error'); }
+        });
+        byId('json-pretty').addEventListener('click', function () {
+          try { byId('json-out').value = JSON.stringify(parseInput(), null, 2); showMsg('已美化。', 'success'); } catch (e) { showMsg(e.message || 'JSON 格式错误。', 'error'); }
+        });
+        byId('json-min').addEventListener('click', function () {
+          try { byId('json-out').value = JSON.stringify(parseInput()); showMsg('已压缩。', 'success'); } catch (e) { showMsg(e.message || 'JSON 格式错误。', 'error'); }
+        });
+        byId('json-sort').addEventListener('click', function () {
+          try { byId('json-out').value = JSON.stringify(sortObject(parseInput()), null, 2); showMsg('已按键排序。', 'success'); } catch (e) { showMsg(e.message || 'JSON 格式错误。', 'error'); }
+        });
+        byId('json-copy').addEventListener('click', async function () {
+          const v = byId('json-out').value.trim();
+          if (!v) return showMsg('没有可复制内容。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    },
+
+    'regex-tester': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <div class="grid gap-3 md:grid-cols-[1fr_180px]">
+              <input id="re-pattern" type="text" class="${labInput()}" placeholder="例如: \\b\\d{4}\\b" />
+              <input id="re-flags" type="text" class="${labInput()}" value="g" placeholder="flags: gi" />
+            </div>
+            <textarea id="re-text" rows="10" class="w-full ${labInput()}" placeholder="输入测试文本..."></textarea>
+            <button id="re-run" class="${labBtn(true)}">测试匹配</button>
+            <div id="re-result" class="rounded-xl border bg-background p-3 text-sm text-muted-foreground min-h-20"></div>
+          </div>
+        `;
+      },
+      bind: function () {
+        byId('re-run').addEventListener('click', function () {
+          clearMsg();
+          const pattern = byId('re-pattern').value;
+          const flags = byId('re-flags').value;
+          const text = byId('re-text').value;
+          if (!pattern) return showMsg('请先输入正则表达式。', 'error');
+          try {
+            const re = new RegExp(pattern, flags);
+            const matches = [];
+            let m;
+            if (!re.global) {
+              m = re.exec(text);
+              if (m) matches.push({ value: m[0], index: m.index });
+            } else {
+              while ((m = re.exec(text)) !== null && matches.length < 500) {
+                matches.push({ value: m[0], index: m.index });
+                if (m[0] === '') re.lastIndex += 1;
+              }
+            }
+            if (!matches.length) {
+              byId('re-result').innerHTML = '无匹配结果。';
+              return showMsg('测试完成。', 'success');
+            }
+            const rows = matches.map(function (it, idx) {
+              return '<tr class="border-b"><td class="py-1.5 pr-3 text-muted-foreground">' + (idx + 1) + '</td><td class="py-1.5 pr-3 text-muted-foreground">' + it.index + '</td><td class="py-1.5 font-mono break-all">' + esc(it.value) + '</td></tr>';
+            }).join('');
+            byId('re-result').innerHTML = '<div class="mb-2 font-medium">匹配到 ' + matches.length + ' 项</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b"><th class="py-1 pr-3 text-left">#</th><th class="py-1 pr-3 text-left">索引</th><th class="py-1 pr-3 text-left">内容</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+            showMsg('测试完成。', 'success');
+          } catch (e) {
+            showMsg('正则表达式无效：' + e.message, 'error');
+          }
+        });
+      }
+    },
+
+    'hash-tool': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <textarea id="hash-input" rows="8" class="w-full ${labInput()}" placeholder="输入待计算文本..."></textarea>
+            <div class="grid gap-3 md:grid-cols-[220px_1fr_auto]">
+              <select id="hash-algo" class="${labInput()}"><option>SHA-1</option><option selected>SHA-256</option><option>SHA-384</option><option>SHA-512</option></select>
+              <input id="hash-output" type="text" class="${labInput('font-mono')}" placeholder="输出哈希值" />
+              <button id="hash-copy" class="${labBtn(false)}">复制</button>
+            </div>
+            <button id="hash-run" class="${labBtn(true)}">计算哈希</button>
+          </div>
+        `;
+      },
+      bind: function () {
+        function toHex(buffer) {
+          return Array.from(new Uint8Array(buffer), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+        }
+        byId('hash-run').addEventListener('click', async function () {
+          clearMsg();
+          const input = byId('hash-input').value;
+          if (!input) return showMsg('请输入文本。', 'error');
+          if (!window.crypto || !window.crypto.subtle || typeof window.crypto.subtle.digest !== 'function') {
+            showMsg('当前环境不支持 WebCrypto（需 HTTPS 或 localhost）。', 'error');
+            return;
+          }
+          try {
+            const algo = byId('hash-algo').value;
+            const digest = await window.crypto.subtle.digest(algo, new TextEncoder().encode(input));
+            byId('hash-output').value = toHex(digest);
+            showMsg('计算完成。', 'success');
+          } catch (_) {
+            showMsg('哈希计算失败，请检查浏览器环境或稍后重试。', 'error');
+          }
+        });
+        byId('hash-copy').addEventListener('click', async function () {
+          const v = byId('hash-output').value.trim();
+          if (!v) return showMsg('暂无结果可复制。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    },
+
+    'text-dedup': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <textarea id="td-input" rows="10" class="w-full ${labInput()}" placeholder="每行一条"></textarea>
+            <div class="flex flex-wrap gap-3 text-sm">
+              <label class="inline-flex items-center gap-2"><input id="td-trim" type="checkbox" checked class="h-4 w-4 rounded border"> 去首尾空格</label>
+              <label class="inline-flex items-center gap-2"><input id="td-ignore-case" type="checkbox" class="h-4 w-4 rounded border"> 忽略大小写去重</label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="td-dedup" class="${labBtn(true)}">去重</button>
+              <button id="td-sort" class="${labBtn(false)}">升序</button>
+              <button id="td-rev" class="${labBtn(false)}">反转</button>
+              <button id="td-copy" class="${labBtn(false)}">复制</button>
+            </div>
+            <textarea id="td-output" rows="10" class="w-full ${labInput()}" placeholder="输出结果"></textarea>
+          </div>
+        `;
+      },
+      bind: function () {
+        function getLines() {
+          const trim = byId('td-trim').checked;
+          const rows = byId('td-input').value.split(/\r?\n/).filter(Boolean);
+          return rows.map(function (s) { return trim ? s.trim() : s; }).filter(Boolean);
+        }
+        byId('td-dedup').addEventListener('click', function () {
+          const ignoreCase = byId('td-ignore-case').checked;
+          const out = [];
+          const seen = new Set();
+          getLines().forEach(function (line) {
+            const key = ignoreCase ? line.toLowerCase() : line;
+            if (seen.has(key)) return;
+            seen.add(key);
+            out.push(line);
+          });
+          byId('td-output').value = out.join('\n');
+          showMsg('去重完成。', 'success');
+        });
+        byId('td-sort').addEventListener('click', function () {
+          byId('td-output').value = getLines().sort(function (a, b) { return a.localeCompare(b, 'zh-Hans-CN'); }).join('\n');
+          showMsg('排序完成。', 'success');
+        });
+        byId('td-rev').addEventListener('click', function () {
+          const base = byId('td-output').value || byId('td-input').value;
+          byId('td-output').value = base.split(/\r?\n/).filter(Boolean).reverse().join('\n');
+          showMsg('反转完成。', 'success');
+        });
+        byId('td-copy').addEventListener('click', async function () {
+          const v = byId('td-output').value.trim();
+          if (!v) return showMsg('没有可复制内容。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    },
+
+    'word-counter': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-4">
+            <textarea id="wc-input" rows="12" class="w-full ${labInput()}" placeholder="输入文本..."></textarea>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div class="rounded-xl border bg-background p-3"><div class="text-xs text-muted-foreground">字符(含空格)</div><div id="wc-chars" class="text-xl font-semibold">0</div></div>
+              <div class="rounded-xl border bg-background p-3"><div class="text-xs text-muted-foreground">字符(无空格)</div><div id="wc-nospace" class="text-xl font-semibold">0</div></div>
+              <div class="rounded-xl border bg-background p-3"><div class="text-xs text-muted-foreground">单词数</div><div id="wc-words" class="text-xl font-semibold">0</div></div>
+              <div class="rounded-xl border bg-background p-3"><div class="text-xs text-muted-foreground">行数 / 段落</div><div id="wc-lines" class="text-xl font-semibold">0 / 0</div></div>
+              <div class="rounded-xl border bg-background p-3"><div class="text-xs text-muted-foreground">阅读时长</div><div id="wc-read" class="text-xl font-semibold">0 分钟</div></div>
+            </div>
+          </div>
+        `;
+      },
+      bind: function () {
+        function calc() {
+          const t = byId('wc-input').value;
+          const chars = t.length;
+          const nospace = t.replace(/\s/g, '').length;
+          const words = (t.trim().match(/\S+/g) || []).length;
+          const lines = t ? t.split(/\r?\n/).length : 0;
+          const paras = t.trim() ? t.trim().split(/\n\s*\n/).length : 0;
+          const readMin = Math.max(1, Math.ceil(words / 300));
+          byId('wc-chars').textContent = String(chars);
+          byId('wc-nospace').textContent = String(nospace);
+          byId('wc-words').textContent = String(words);
+          byId('wc-lines').textContent = lines + ' / ' + paras;
+          byId('wc-read').textContent = readMin + ' 分钟';
+        }
+        byId('wc-input').addEventListener('input', calc);
+        calc();
+      }
+    },
+
+    'case-converter': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <textarea id="cc-input" rows="8" class="w-full ${labInput()}" placeholder="输入文本或变量名"></textarea>
+            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <button data-case="upper" class="${labBtn(false)} cc-btn">UPPER_CASE</button>
+              <button data-case="lower" class="${labBtn(false)} cc-btn">lower_case</button>
+              <button data-case="camel" class="${labBtn(false)} cc-btn">camelCase</button>
+              <button data-case="pascal" class="${labBtn(false)} cc-btn">PascalCase</button>
+              <button data-case="snake" class="${labBtn(false)} cc-btn">snake_case</button>
+              <button data-case="kebab" class="${labBtn(false)} cc-btn">kebab-case</button>
+              <button data-case="title" class="${labBtn(false)} cc-btn">Title Case</button>
+              <button data-case="sentence" class="${labBtn(false)} cc-btn">Sentence case</button>
+            </div>
+            <textarea id="cc-output" rows="8" class="w-full ${labInput()}" placeholder="输出结果"></textarea>
+            <button id="cc-copy" class="${labBtn(false)}">复制输出</button>
+          </div>
+        `;
+      },
+      bind: function () {
+        function words(str) {
+          return str
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/[_\-]+/g, ' ')
+            .trim()
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean);
+        }
+        function convert(type, input) {
+          const w = words(input);
+          if (!w.length) return '';
+          if (type === 'upper') return input.toUpperCase();
+          if (type === 'lower') return input.toLowerCase();
+          if (type === 'camel') return w[0] + w.slice(1).map(function (s) { return s[0].toUpperCase() + s.slice(1); }).join('');
+          if (type === 'pascal') return w.map(function (s) { return s[0].toUpperCase() + s.slice(1); }).join('');
+          if (type === 'snake') return w.join('_');
+          if (type === 'kebab') return w.join('-');
+          if (type === 'title') return w.map(function (s) { return s[0].toUpperCase() + s.slice(1); }).join(' ');
+          if (type === 'sentence') {
+            const v = w.join(' ');
+            return v[0].toUpperCase() + v.slice(1);
+          }
+          return input;
+        }
+        root.addEventListener('click', function (e) {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const type = t.getAttribute('data-case');
+          if (!type) return;
+          byId('cc-output').value = convert(type, byId('cc-input').value);
+          showMsg('转换完成。', 'success');
+        });
+        byId('cc-copy').addEventListener('click', async function () {
+          const v = byId('cc-output').value.trim();
+          if (!v) return showMsg('没有可复制内容。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    },
+
+    'query-parser': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <input id="qp-input" type="text" class="w-full ${labInput()}" placeholder="输入完整 URL 或 ?a=1&b=2" />
+            <div class="flex flex-wrap gap-2">
+              <button id="qp-parse" class="${labBtn(true)}">解析参数</button>
+              <button id="qp-build" class="${labBtn(false)}">从 JSON 组装</button>
+            </div>
+            <div class="grid gap-3 md:grid-cols-2">
+              <textarea id="qp-json" rows="10" class="w-full ${labInput('font-mono')}" placeholder="JSON 结果"></textarea>
+              <textarea id="qp-table" rows="10" class="w-full ${labInput('font-mono')}" placeholder="参数列表"></textarea>
+            </div>
+          </div>
+        `;
+      },
+      bind: function () {
+        byId('qp-parse').addEventListener('click', function () {
+          clearMsg();
+          const input = byId('qp-input').value.trim();
+          if (!input) return showMsg('请输入 URL 或 Query。', 'error');
+          try {
+            const q = input.includes('?') ? input.slice(input.indexOf('?')) : (input.startsWith('?') ? input : '?' + input);
+            const sp = new URLSearchParams(q);
+            const obj = {};
+            const rows = [];
+            sp.forEach(function (v, k) {
+              rows.push(k + ' = ' + v);
+              if (Object.prototype.hasOwnProperty.call(obj, k)) {
+                if (Array.isArray(obj[k])) obj[k].push(v); else obj[k] = [obj[k], v];
+              } else obj[k] = v;
+            });
+            byId('qp-json').value = JSON.stringify(obj, null, 2);
+            byId('qp-table').value = rows.join('\n');
+            showMsg('解析完成。', 'success');
+          } catch (_) {
+            showMsg('解析失败。', 'error');
+          }
+        });
+        byId('qp-build').addEventListener('click', function () {
+          clearMsg();
+          try {
+            const obj = JSON.parse(byId('qp-json').value || '{}');
+            const sp = new URLSearchParams();
+            Object.keys(obj).forEach(function (k) {
+              const v = obj[k];
+              if (Array.isArray(v)) v.forEach(function (x) { sp.append(k, String(x)); });
+              else sp.set(k, String(v));
+            });
+            byId('qp-input').value = '?' + sp.toString();
+            showMsg('组装完成。', 'success');
+          } catch (_) {
+            showMsg('请先输入合法 JSON。', 'error');
+          }
+        });
+      }
+    },
+
+    'base-converter': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <div class="grid gap-3 md:grid-cols-3">
+              <input id="base-val" type="text" class="${labInput('font-mono md:col-span-2')}" placeholder="输入数值，可带负号" />
+              <select id="base-from" class="${labInput()}"><option value="2">二进制</option><option value="8">八进制</option><option value="10" selected>十进制</option><option value="16">十六进制</option></select>
+            </div>
+            <button id="base-run" class="${labBtn(true)}">转换</button>
+            <div class="grid gap-3 md:grid-cols-2">
+              <input id="base-2" type="text" class="${labInput('font-mono')}" placeholder="二进制" readonly />
+              <input id="base-8" type="text" class="${labInput('font-mono')}" placeholder="八进制" readonly />
+              <input id="base-10" type="text" class="${labInput('font-mono')}" placeholder="十进制" readonly />
+              <input id="base-16" type="text" class="${labInput('font-mono')}" placeholder="十六进制" readonly />
+            </div>
+          </div>
+        `;
+      },
+      bind: function () {
+        function parseToBigInt(value, base) {
+          const v = value.trim();
+          if (!v) throw new Error('请输入数值。');
+          const neg = v.startsWith('-');
+          const body = neg ? v.slice(1) : v;
+          const rules = { 2: /^[01]+$/, 8: /^[0-7]+$/, 10: /^[0-9]+$/, 16: /^[0-9a-fA-F]+$/ };
+          if (!rules[base].test(body)) throw new Error('输入数值与进制不匹配。');
+          let out = 0n;
+          const b = BigInt(base);
+          for (const ch of body.toLowerCase()) {
+            const code = ch >= 'a' ? (ch.charCodeAt(0) - 87) : Number(ch);
+            out = out * b + BigInt(code);
+          }
+          return neg ? -out : out;
+        }
+        byId('base-run').addEventListener('click', function () {
+          clearMsg();
+          try {
+            const from = Number(byId('base-from').value);
+            const num = parseToBigInt(byId('base-val').value, from);
+            byId('base-2').value = num.toString(2);
+            byId('base-8').value = num.toString(8);
+            byId('base-10').value = num.toString(10);
+            byId('base-16').value = num.toString(16).toUpperCase();
+            showMsg('转换完成。', 'success');
+          } catch (e) {
+            showMsg(e.message || '转换失败。', 'error');
+          }
+        });
+      }
+    },
+
+    'color-converter': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <div class="grid gap-3 md:grid-cols-3">
+              <input id="color-hex" type="text" class="${labInput('font-mono')}" placeholder="#3B82F6" />
+              <input id="color-rgb" type="text" class="${labInput('font-mono')}" placeholder="rgb(59,130,246)" />
+              <input id="color-hsl" type="text" class="${labInput('font-mono')}" placeholder="hsl(217,91%,60%)" readonly />
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="color-from-hex" class="${labBtn(true)}">HEX -> RGB/HSL</button>
+              <button id="color-from-rgb" class="${labBtn(false)}">RGB -> HEX/HSL</button>
+              <button id="color-copy" class="${labBtn(false)}">复制 HEX</button>
+            </div>
+            <div id="color-preview" class="h-28 rounded-2xl border"></div>
+          </div>
+        `;
+      },
+      bind: function () {
+        function setPreview(c) { byId('color-preview').style.background = c; }
+        function rgbToHsl(r, g, b) {
+          r /= 255; g /= 255; b /= 255;
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          let h = 0, s = 0;
+          const l = (max + min) / 2;
+          const d = max - min;
+          if (d !== 0) {
+            s = d / (1 - Math.abs(2 * l - 1));
+            switch (max) {
+              case r: h = 60 * (((g - b) / d) % 6); break;
+              case g: h = 60 * ((b - r) / d + 2); break;
+              default: h = 60 * ((r - g) / d + 4); break;
+            }
+          }
+          if (h < 0) h += 360;
+          return 'hsl(' + Math.round(h) + ',' + Math.round(s * 100) + '%,' + Math.round(l * 100) + '%)';
+        }
+        byId('color-from-hex').addEventListener('click', function () {
+          const raw = byId('color-hex').value.trim().replace('#', '');
+          const hex = raw.length === 3 ? raw.split('').map(function (x) { return x + x; }).join('') : raw;
+          if (!/^[0-9a-fA-F]{6}$/.test(hex)) return showMsg('请输入合法 HEX。', 'error');
+          const r = parseInt(hex.slice(0, 2), 16);
+          const g = parseInt(hex.slice(2, 4), 16);
+          const b = parseInt(hex.slice(4, 6), 16);
+          const rgb = 'rgb(' + r + ',' + g + ',' + b + ')';
+          byId('color-hex').value = '#' + hex.toUpperCase();
+          byId('color-rgb').value = rgb;
+          byId('color-hsl').value = rgbToHsl(r, g, b);
+          setPreview(rgb);
+          showMsg('转换完成。', 'success');
+        });
+        byId('color-from-rgb').addEventListener('click', function () {
+          const m = byId('color-rgb').value.trim().match(/^rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i);
+          if (!m) return showMsg('请输入 rgb(r,g,b) 格式。', 'error');
+          const r = Number(m[1]), g = Number(m[2]), b = Number(m[3]);
+          if ([r, g, b].some(function (n) { return n < 0 || n > 255; })) return showMsg('RGB 必须在 0-255。', 'error');
+          const hex = '#' + [r, g, b].map(function (n) { return n.toString(16).padStart(2, '0'); }).join('').toUpperCase();
+          byId('color-hex').value = hex;
+          byId('color-hsl').value = rgbToHsl(r, g, b);
+          setPreview('rgb(' + r + ',' + g + ',' + b + ')');
+          showMsg('转换完成。', 'success');
+        });
+        byId('color-copy').addEventListener('click', async function () {
+          const v = byId('color-hex').value.trim();
+          if (!v) return showMsg('暂无可复制颜色值。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    },
+
+    'lorem-ipsum': {
+      render: function () {
+        root.innerHTML = `
+          <div class="space-y-3">
+            <div class="grid gap-3 md:grid-cols-3">
+              <input id="lorem-count" type="number" min="1" max="100" value="5" class="${labInput()}" />
+              <select id="lorem-type" class="${labInput()}"><option value="paragraph">段落</option><option value="sentence">句子</option></select>
+              <select id="lorem-lang" class="${labInput()}"><option value="en">English</option><option value="zh">中文</option></select>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="lorem-gen" class="${labBtn(true)}">生成</button>
+              <button id="lorem-copy" class="${labBtn(false)}">复制</button>
+            </div>
+            <textarea id="lorem-output" rows="12" class="w-full ${labInput()}" placeholder="生成结果"></textarea>
+          </div>
+        `;
+      },
+      bind: function () {
+        const wordsEn = 'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat'.split(' ');
+        const wordsZh = '春风 秋雨 山川 湖海 星河 晨曦 晚霞 城市 烟火 微光 远方 心事 故事 旅程 章节 诗意 清风 云海 月色'.split(' ');
+        function rand(n) { return Math.floor(Math.random() * n); }
+        function sentence(lang) {
+          const zh = lang === 'zh';
+          const lib = zh ? wordsZh : wordsEn;
+          const len = zh ? (6 + rand(8)) : (6 + rand(12));
+          const arr = [];
+          for (let i = 0; i < len; i++) arr.push(lib[rand(lib.length)]);
+          if (zh) return arr.join('') + '。';
+          const v = arr.join(' ');
+          return v[0].toUpperCase() + v.slice(1) + '.';
+        }
+        function paragraph(lang) {
+          const cnt = 3 + rand(5);
+          const out = [];
+          for (let i = 0; i < cnt; i++) out.push(sentence(lang));
+          return lang === 'zh' ? out.join('') : out.join(' ');
+        }
+        byId('lorem-gen').addEventListener('click', function () {
+          const n = Math.max(1, Math.min(100, Number(byId('lorem-count').value || 1)));
+          const type = byId('lorem-type').value;
+          const lang = byId('lorem-lang').value;
+          const list = [];
+          for (let i = 0; i < n; i++) list.push(type === 'sentence' ? sentence(lang) : paragraph(lang));
+          byId('lorem-output').value = type === 'sentence' ? list.join(lang === 'zh' ? '' : ' ') : list.join('\n\n');
+          showMsg('生成完成。', 'success');
+        });
+        byId('lorem-copy').addEventListener('click', async function () {
+          const v = byId('lorem-output').value.trim();
+          if (!v) return showMsg('暂无可复制内容。', 'error');
+          try { await copyText(v); showMsg('复制成功。', 'success'); } catch (_) { showMsg('复制失败。', 'error'); }
+        });
+      }
+    }
+  };
+
+  const current = tools[toolKey];
+  if (!current) {
+    root.innerHTML = '<div class="rounded-xl border bg-background p-4 text-sm text-muted-foreground">工具尚未配置。</div>';
+    return;
+  }
+  current.render();
+  current.bind();
+})();
+</script>
+{{ end }}

@@ -1,0 +1,30 @@
+{{ define "main" }}
+<div class="container py-16">
+  <div class="mx-auto max-w-2xl rounded-xl border bg-card p-8 text-center shadow-sm space-y-4">
+    <div class="mx-auto h-14 w-14 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-2xl">
+      <i class="fa-solid fa-link-slash"></i>
+    </div>
+    <h1 class="text-3xl font-bold tracking-tight">短链接不存在</h1>
+    <p class="text-muted-foreground">你访问的短链接无效，可能输入错误或已被删除。</p>
+    <p class="text-sm text-muted-foreground" id="missing-code"></p>
+    <div class="pt-2 flex items-center justify-center gap-3">
+      <a href="/tools/short-link/" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+        重新生成短链
+      </a>
+      <a href="/tools/" class="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+        回到工具中心
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const code = new URLSearchParams(window.location.search).get('code') || '';
+  const el = document.getElementById('missing-code');
+  if (code) {
+    el.textContent = `请求 code：${code}`;
+  }
+})();
+</script>
+{{ end }}

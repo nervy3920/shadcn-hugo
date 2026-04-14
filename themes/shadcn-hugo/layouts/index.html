@@ -1,5 +1,5 @@
 {{ define "main" }}
-<div class="container relative pb-10">
+<div class="container relative pb-10 home-shell">
   <!-- Hero Section -->
   <section class="mx-auto flex max-w-[980px] flex-col items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-20">
     <h1 class="text-center text-3xl font-bold leading-tight tracking-tighter md:text-6xl lg:leading-[1.1]">
@@ -17,6 +17,64 @@
         {{ partial "ui/button.html" (dict "text" "<i class='fa-brands fa-github'></i> GitHub" "variant" "outline" "class" "gap-2") }}
       </a>
       {{ end }}
+    </div>
+
+    <div class="w-full max-w-[980px] space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm md:text-base font-semibold tracking-wide text-muted-foreground uppercase">工具速览</h2>
+        <a href="/tools/" class="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+          进入工具中心
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </a>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <a href="/tools/short-link/" class="tool-card tool-card-featured group">
+          <div class="flex items-center justify-between">
+            <span class="tool-chip">NEW</span>
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+          </div>
+          <h3 class="mt-4 text-lg font-bold">短链接生成</h3>
+          <p class="mt-2 text-sm text-muted-foreground">5 位随机短链，支持密码保护与阅后即焚。</p>
+        </a>
+
+        
+
+        <a href="/tools/pan-search/" class="tool-card group">
+          <div class="flex items-center justify-between">
+            <span class="tool-chip">随机推荐</span>
+            <i class="fa-solid fa-hard-drive"></i>
+          </div>
+          <h3 class="mt-4 text-base font-semibold">网盘资源搜索</h3>
+          <p class="mt-2 text-sm text-muted-foreground">按关键词聚合搜索百度、夸克、阿里云等网盘资源。</p>
+        </a>
+
+        <a href="/tools/ai-mindmap/" class="tool-card group">
+          <div class="flex items-center justify-between">
+            <span class="tool-chip">NEW</span>
+            <i class="fa-solid fa-diagram-project"></i>
+          </div>
+          <h3 class="mt-4 text-base font-semibold">AI思维导图生成</h3>
+          <p class="mt-2 text-sm text-muted-foreground">输入主题，流式生成 Mermaid mindmap 结构。</p>
+        </a>
+
+        <a href="/tools/timestamp/" class="tool-card group">
+          <div class="flex items-center justify-between">
+            <span class="tool-chip">随机推荐</span>
+            <i class="fa-solid fa-stopwatch"></i>
+          </div>
+          <h3 class="mt-4 text-base font-semibold">时间戳转换器</h3>
+          <p class="mt-2 text-sm text-muted-foreground">秒级与毫秒级时间戳互转。</p>
+        </a>
+
+        <a href="/tools/password-check/" class="tool-card group">
+          <div class="flex items-center justify-between">
+            <span class="tool-chip">随机推荐</span>
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <h3 class="mt-4 text-base font-semibold">密码强度检查</h3>
+          <p class="mt-2 text-sm text-muted-foreground">检测口令复杂度并给出优化建议。</p>
+        </a>
+      </div>
     </div>
   </section>
 

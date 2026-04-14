@@ -14,7 +14,11 @@
         {{ partial "ui/button.html" (dict "variant" "ghost" "size" "sm" "text" "<i class='fa-brands fa-github text-lg'></i>" "href" .Site.Params.github) }}
       {{ end }}
       {{ if .Site.Params.email }}
-        {{ partial "ui/button.html" (dict "variant" "ghost" "size" "sm" "text" "<i class='fa-solid fa-envelope text-lg'></i>" "href" .Site.Params.email) }}
+        {{ $emailHref := .Site.Params.email }}
+        {{ if not (hasPrefix $emailHref "mailto:") }}
+          {{ $emailHref = printf "mailto:%s" $emailHref }}
+        {{ end }}
+        {{ partial "ui/button.html" (dict "variant" "ghost" "size" "sm" "text" "<i class='fa-solid fa-envelope text-lg'></i>" "href" $emailHref) }}
       {{ end }}
     </div>
   </div>

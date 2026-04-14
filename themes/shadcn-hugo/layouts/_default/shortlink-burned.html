@@ -1,0 +1,27 @@
+{{ define "main" }}
+<div class="container py-16">
+  <div class="mx-auto max-w-2xl rounded-xl border bg-card p-8 text-center shadow-sm space-y-4">
+    <div class="mx-auto h-14 w-14 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-2xl">
+      <i class="fa-solid fa-fire"></i>
+    </div>
+    <h1 class="text-3xl font-bold tracking-tight">阅后即焚已触发</h1>
+    <p class="text-muted-foreground">这个短链接已经被访问并销毁，无法再次打开。</p>
+    <p class="text-sm text-muted-foreground" id="burned-code"></p>
+    <div class="pt-2">
+      <a href="/tools/short-link/" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+        返回短链接工具
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const code = new URLSearchParams(window.location.search).get('code') || '';
+  const el = document.getElementById('burned-code');
+  if (code) {
+    el.textContent = `短链 code：${code}`;
+  }
+})();
+</script>
+{{ end }}

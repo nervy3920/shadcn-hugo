@@ -1,82 +1,108 @@
-# Hugo + Tailwind CSS 项目使用教程
+# shadcn-hugo（含工具中心与后端服务）
 
-这是一个基于 Hugo 框架并集成 Tailwind CSS (使用 shadcn-hugo 主题) 的现代化博客/文档项目。
+这是一个基于 Hugo + Tailwind CSS 的博客项目，主题为 `shadcn-hugo`，并扩展了工具中心与独立后端服务。
 
-## 🚀 快速开始
+## 项目结构
 
-### 1. 安装依赖
-在开始之前，请确保您已安装 [Node.js](https://nodejs.org/) 和 [Hugo](https://gohugo.io/)。
+- `content/`：站点内容（文章、工具页内容等）
+- `themes/shadcn-hugo/`：主题与模板
+- `server/`：后端服务目录（短链接、AI 思维导图、网盘资源搜索）
+- `hugo.toml`：站点主配置（包含 `backendURL`、giscus 配置等）
 
-下载本项目，把项目全部复制到hugo网站文件夹根目录下。
+## 新增能力说明
+
+模板侧新增了“工具中心”及相关页面，后端服务支持：
+
+- 短链接生成
+- AI 思维导图
+- 网盘资源搜索
+
+## 前端快速开始
 
 ```bash
-# 安装 npm 依赖（用于 Tailwind CSS 处理）
 npm install
-```
-
-### 2. 本地开发
-启动 Hugo 开发服务器，它会自动处理 CSS 并支持实时预览。
-
-```bash
 hugo server -D
 ```
-访问地址：`http://localhost:1313`
 
-### 3. 构建生产版本
-生成静态文件到 `public/` 目录。
+访问：`http://localhost:1313`
+
+## 后端快速开始
+
+```bash
+cd server
+npm install
+cp .env.example .env
+npm run dev
+```
+
+默认后端端口：`3090`
+
+## 配置前后端联通
+
+在 `hugo.toml` 中将后端地址改成你自己的服务地址：
+
+```toml
+[params]
+  backendURL = "https://your-backend.example.com"
+```
+
+如果你本地运行后端，也可以改为：`http://127.0.0.1:3090`
+
+## giscus 评论接入
+
+本项目已在 `hugo.toml` 保留 giscus 配置项，你可以按自己的仓库填写：
+
+```toml
+[params.giscus]
+  enable = true
+  repo = "yourname/yourrepo"
+  repoId = "你的_repoId"
+  category = "General"
+  categoryId = "你的_categoryId"
+  mapping = "pathname"
+  strict = "0"
+  reactionsEnabled = "1"
+  emitMetadata = "0"
+  inputPosition = "top"
+  theme = "light"
+  lang = "zh-CN"
+  loading = "lazy"
+```
+
+说明：`repoId`、`categoryId` 等请在 giscus 官方配置页面生成后再填入。
+
+## 后端 `.env` 配置说明
+
+后端配置统一写在 `server/.env`（可从 `server/.env.example` 复制）。
+
+关键配置如下：
+
+- `PORT`：后端服务端口（默认 `3090`）
+- `DB_*`：MySQL 连接信息
+- `PAN_SEARCH_API_URL`：盘搜接口地址
+- `PAN_SEARCH_API_TOKEN`：盘搜接口令牌（如接口需要）
+- `AI_API_BASE_URL`：AI 接口中转站或官方地址（支持自定义中转站）
+- `AI_API_KEY`：AI 接口密钥
+- `AI_MODEL`：模型名称
+
+### 盘搜 API
+
+盘搜推荐接入：`https://github.com/fish2018/pansou`
+
+你需要将可用的盘搜 API 地址填入 `PAN_SEARCH_API_URL`。
+
+### AI 思维导图
+
+AI 思维导图使用 OpenAI 兼容接口：
+
+- 必填 `AI_API_KEY`
+- `AI_API_BASE_URL` 支持配置为你自己的 AI 中转站地址
+- 若只填域名，后端会自动补全到 `/v1/chat/completions`
+
+## 构建生产版本
 
 ```bash
 hugo --gc --minify
 ```
 
----
-
-## 📂 目录结构说明
-
-- `content/posts/`: 所有的文章 Markdown 文件都存放在这里。
-- `themes/shadcn-hugo/`: 项目使用的主题文件。
-- `tailwind.config.js`: Tailwind CSS 的配置文件，用于自定义颜色、字体等。
-- `postcss.config.js`: PostCSS 配置文件，负责启动 Tailwind 编译。
-- `public/`: 构建后生成的静态网站文件（可安全删除，重新构建会再次生成）。
-- `resources/`: Hugo 的资源缓存目录（可安全删除）。
-
----
-
-## 📝 写作指南
-
-### 创建新文章
-您可以使用 Hugo 命令创建新文章：
-
-```bash
-hugo new posts/my-new-post.md
-```
-
-### 文章开头配置 (Front Matter)
-每篇文章顶部需要包含如下配置：
-
-```markdown
----
-title: "我的第一篇文章"
-date: 2025-12-27
-draft: false
-tags: ["教程", "Hugo"]
----
-```
-
----
-
-## 🛠️ 常见问题
-
-### 1. 修改了样式没有生效？
-尝试清理缓存并重启服务器：
-```bash
-rm -rf resources/_gen
-hugo server -D
-```
-
-### 2. 为什么有两个 tailwind.config.js？
-- **根目录下的文件**：是项目的主配置文件，您的所有自定义修改（颜色、间距等）都应在此进行。
-- **主题目录下的文件**：是主题自带的备份配置，建议保留以维持主题完整性，但通常不需要修改它。
-
-### 3. 文件名建议
-为了更好的兼容性，建议文章文件名使用小写字母和连字符，例如：`my-blog-post.md`。
+产物目录：`public/`

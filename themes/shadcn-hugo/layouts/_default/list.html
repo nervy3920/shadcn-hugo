@@ -1,31 +1,33 @@
 {{ define "main" }}
 <div class="container py-10">
-  <div class="flex flex-col items-start gap-4 md:flex-row md:justify-between md:items-center">
-    <div class="space-y-1">
-      <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
-        <i class="fa-solid fa-box-archive text-primary"></i>
-        {{ .Title }}
-      </h1>
-      {{ with .Description }}
-        <p class="text-lg text-muted-foreground">{{ . }}</p>
-      {{ end }}
-      <p class="text-lg text-muted-foreground">浏览所有 {{ .Title }} (共 {{ len .Data.Pages }} 篇)</p>
+  <section class="posts-list-shell">
+    <div class="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-1">
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight md:text-4xl">
+          <i class="fa-solid fa-box-archive text-primary"></i>
+          {{ .Title }}
+        </h1>
+        {{ with .Description }}
+          <p class="text-lg text-muted-foreground">{{ . }}</p>
+        {{ end }}
+        <p class="text-lg text-muted-foreground">浏览所有 {{ .Title }} (共 {{ len .Data.Pages }} 篇)</p>
+      </div>
     </div>
-  </div>
-  
-  {{ partial "ui/separator.html" (dict "class" "my-8") }}
 
-  {{ $gridColumns := .Site.Params.gridColumns | default 4 }}
-{{ $lgGridCols := cond (eq $gridColumns 1) "lg:grid-cols-1" (cond (eq $gridColumns 2) "lg:grid-cols-2" (cond (eq $gridColumns 3) "lg:grid-cols-3" "lg:grid-cols-4")) }}
-<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 {{ $lgGridCols }}">
-    {{ $paginator := .Paginate .Data.Pages (.Site.Params.pagerSize | default 8) }}
-    {{ range $paginator.Pages }}
-      {{ partial "post-card.html" (dict "page" . "gridColumns" $gridColumns) }}
-    {{ end }}
-  </div>
+    {{ partial "ui/separator.html" (dict "class" "my-8") }}
 
-  <div class="mt-10">
-    {{ partial "ui/pagination.html" . }}
-  </div>
+    {{ $gridColumns := .Site.Params.gridColumns | default 4 }}
+    {{ $lgGridCols := cond (eq $gridColumns 1) "lg:grid-cols-1" (cond (eq $gridColumns 2) "lg:grid-cols-2" (cond (eq $gridColumns 3) "lg:grid-cols-3" "lg:grid-cols-4")) }}
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 {{ $lgGridCols }}">
+      {{ $paginator := .Paginate .Data.Pages (.Site.Params.pagerSize | default 8) }}
+      {{ range $paginator.Pages }}
+        {{ partial "post-card.html" (dict "page" . "gridColumns" $gridColumns) }}
+      {{ end }}
+    </div>
+
+    <div class="mt-10">
+      {{ partial "ui/pagination.html" . }}
+    </div>
+  </section>
 </div>
 {{ end }}

@@ -1,0 +1,98 @@
+{{ define "main" }}
+<style>
+  #notfound-shell {
+    display: none;
+  }
+</style>
+<div class="container py-20">
+  <div id="notfound-shell" class="mx-auto max-w-3xl rounded-2xl border bg-card p-10 shadow-sm text-center relative overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_35%)]"></div>
+    <div class="relative space-y-5">
+      <p class="text-xs uppercase tracking-[0.25em] text-muted-foreground" id="error-code-label">Error 404</p>
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">页面不存在</h1>
+      <p class="text-muted-foreground max-w-xl mx-auto" id="error-description">你访问的页面可能已被移动、删除，或者链接地址输入有误。</p>
+
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <a href="/" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+          返回首页
+        </a>
+        <a href="/posts/" class="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+          浏览文章
+        </a>
+        <a href="/tools/" class="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+          工具中心
+        </a>
+      </div>
+
+      <div class="mx-auto mt-4 max-w-md rounded-lg border bg-background/70 p-4 text-left">
+        <p class="text-xs text-muted-foreground mb-2">你可以尝试：</p>
+        <ul class="text-sm text-foreground space-y-1">
+          <li>1. 检查 URL 是否拼写正确</li>
+          <li>2. 从导航菜单重新进入目标页面</li>
+          <li>3. 使用右上角搜索框查找内容</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const backendBase = '{{ .Site.Params.backendURL }}'.replace(/\/$/, '');
+  const code = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  const codePattern = /^[a-zA-Z0-9]{5}$/;
+  const shell = document.getElementById('notfound-shell');
+
+  function showNotFound(customDesc) {
+    const labelEl = document.getElementById('error-code-label');
+    const descEl = document.getElementById('error-description');
+    if (labelEl) {
+      labelEl.textContent = 'Error 404';
+    }
+    if (descEl && customDesc) {
+      descEl.textContent = customDesc;
+    }
+    if (shell) {
+      shell.style.display = 'block';
+    }
+  }
+
+  if (codePattern.test(code) === false) {
+    showNotFound();
+    return;
+  }
+
+  (async function resolveShortCode() {
+    try {
+      const resolveResp = await fetch(`${backendBase}/api/resolve/${code}`);
+
+      if (resolveResp.status === 404) {
+        showNotFound('该短链接不存在或已失效。');
+        return;
+      }
+      if (resolveResp.status === 410) {
+        window.location.href = '/tools/short-link/burned/?code=' + encodeURIComponent(code);
+        return;
+      }
+      if (resolveResp.status === 401) {
+        window.location.href = '/tools/short-link/unlock/?code=' + encodeURIComponent(code);
+        return;
+      }
+      if (resolveResp.ok === false) {
+        showNotFound('短链服务暂时不可用，请稍后重试。');
+        return;
+      }
+
+      const data = await resolveResp.json();
+      if (data && data.targetUrl) {
+        window.location.href = data.targetUrl;
+        return;
+      }
+      showNotFound('该短链接缺少有效跳转地址。');
+    } catch (err) {
+      showNotFound('无法连接短链服务，请检查后端配置。');
+    }
+  })();
+})();
+</script>
+{{ end }}

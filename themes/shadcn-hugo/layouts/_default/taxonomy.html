@@ -1,25 +1,27 @@
 {{ define "main" }}
 <div class="container py-10">
-  <div class="space-y-1">
-    <h1 class="text-3xl font-bold tracking-tight md:text-4xl flex items-center gap-3">
-      <i class="fa-solid fa-tag text-primary"></i>
-      {{ .Title }}
-    </h1>
-    <p class="text-lg text-muted-foreground">归档于 {{ .Title }} 的文章</p>
-  </div>
+  <section class="tax-shell">
+    <div class="space-y-1">
+      <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight md:text-4xl">
+        <i class="fa-solid fa-tag text-primary"></i>
+        {{ .Title }}
+      </h1>
+      <p class="text-lg text-muted-foreground">归档于 {{ .Title }} 的文章</p>
+    </div>
 
-  {{ partial "ui/separator.html" (dict "class" "my-8") }}
+    {{ partial "ui/separator.html" (dict "class" "my-8") }}
 
-  {{ $gridColumns := .Site.Params.gridColumns | default 4 }}
-  {{ $lgGridCols := cond (eq $gridColumns 1) "lg:grid-cols-1" (cond (eq $gridColumns 2) "lg:grid-cols-2" (cond (eq $gridColumns 3) "lg:grid-cols-3" "lg:grid-cols-4")) }}
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 {{ $lgGridCols }}">
-    {{ range .Paginator.Pages }}
-      {{ partial "post-card.html" (dict "page" . "gridColumns" $gridColumns) }}
-    {{ end }}
-  </div>
+    {{ $gridColumns := .Site.Params.gridColumns | default 4 }}
+    {{ $lgGridCols := cond (eq $gridColumns 1) "lg:grid-cols-1" (cond (eq $gridColumns 2) "lg:grid-cols-2" (cond (eq $gridColumns 3) "lg:grid-cols-3" "lg:grid-cols-4")) }}
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 {{ $lgGridCols }}">
+      {{ range .Paginator.Pages }}
+        {{ partial "post-card.html" (dict "page" . "gridColumns" $gridColumns) }}
+      {{ end }}
+    </div>
 
-  <div class="mt-10">
-    {{ partial "ui/pagination.html" . }}
-  </div>
+    <div class="mt-10">
+      {{ partial "ui/pagination.html" . }}
+    </div>
+  </section>
 </div>
 {{ end }}

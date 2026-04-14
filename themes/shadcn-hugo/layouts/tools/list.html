@@ -1,0 +1,136 @@
+{{ define "main" }}
+<div class="container py-10">
+  {{ $tools := sort .Sections "Title" }}
+  {{ $.Scratch.Set "toolCenterCats" (slice) }}
+  {{ range $tools }}
+    {{ $cat := .Params.toolCategory | default "未分类" }}
+    {{ if not (in ($.Scratch.Get "toolCenterCats") $cat) }}
+      {{ $.Scratch.Add "toolCenterCats" (slice $cat) }}
+    {{ end }}
+  {{ end }}
+  {{ $categories := sort ($.Scratch.Get "toolCenterCats") }}
+
+  <section class="tcx-shell rounded-2xl border bg-card/90 shadow-sm">
+    <div class="rounded-t-2xl border-b bg-gradient-to-b from-background/95 to-background/65 p-5 md:p-7">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="tcx-kicker">TOOL CENTER</p>
+          <h1 class="mt-2 flex items-center gap-3 text-3xl font-bold tracking-tight md:text-4xl">
+            <i class="fa-solid fa-screwdriver-wrench text-primary"></i>
+            {{ .Title }}
+          </h1>
+          <p class="mt-2 text-base text-muted-foreground md:text-lg">{{ .Description | default "在这里发现站点内置的实用工具。" }}</p>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <span class="inline-flex items-center rounded-md border bg-background px-2.5 py-1">工具 {{ len $tools }}</span>
+          <span class="inline-flex items-center rounded-md border bg-background px-2.5 py-1">分类 {{ len $categories }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 md:p-6">
+      <div class="rounded-xl border bg-background/85 p-2">
+        <div id="tool-tabs" class="tcx-tabs flex gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
+          <button type="button" data-tool-cat="全部" class="tcx-tab is-active">全部 <span class="tcx-count">{{ len $tools }}</span></button>
+          {{ range $categories }}
+            {{ $cat := . }}
+            {{ $count := 0 }}
+            {{ range $tools }}
+              {{ if eq (.Params.toolCategory | default "未分类") $cat }}
+                {{ $count = add $count 1 }}
+              {{ end }}
+            {{ end }}
+            <button type="button" data-tool-cat="{{ $cat }}" class="tcx-tab">{{ $cat }} <span class="tcx-count">{{ $count }}</span></button>
+          {{ end }}
+        </div>
+      </div>
+
+      <div id="tool-grid" class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {{ range $tools }}
+          {{ $cat := .Params.toolCategory | default "未分类" }}
+          {{ $icon := .Params.toolIcon | default "fa-screwdriver-wrench" }}
+          {{ if eq $icon "fa-brackets-curly" }}{{ $icon = "fa-code" }}{{ end }}
+          <a href="{{ .RelPermalink }}" data-tool-item data-cat="{{ $cat }}" class="tcx-card group {{ if eq .RelPermalink "/tools/short-link/" }}tcx-card-featured{{ end }}">
+            <div class="flex items-center justify-between gap-3">
+              <span class="inline-flex items-center rounded-md border bg-background/80 px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ $cat }}</span>
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background text-primary/85">
+                <i class="fa-solid {{ $icon }}"></i>
+              </span>
+            </div>
+
+            <h2 class="mt-4 text-lg font-semibold leading-tight tracking-tight">{{ .Title }}</h2>
+            <p class="mt-2 line-clamp-2 text-sm text-muted-foreground">{{ .Description }}</p>
+
+            <div class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary">
+              进入工具
+              <i class="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-0.5"></i>
+            </div>
+          </a>
+        {{ end }}
+      </div>
+
+      <div id="tool-empty" class="mt-6 hidden rounded-xl border border-dashed bg-background p-8 text-center text-sm text-muted-foreground">
+        当前分类暂无工具。
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const tabs = document.getElementById('tool-tabs');
+  const items = Array.from(document.querySelectorAll('[data-tool-item]'));
+  const empty = document.getElementById('tool-empty');
+  if (!tabs) return;
+
+  function setActive(tab) {
+    Array.from(tabs.querySelectorAll('.tcx-tab')).forEach(function (t) {
+      t.classList.remove('is-active');
+    });
+    tab.classList.add('is-active');
+    tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+
+  function showCard(el, index) {
+    el.style.display = '';
+    el.classList.remove('tcx-hidden');
+    el.style.animationDelay = String(Math.min(index * 30, 210)) + 'ms';
+    el.classList.add('tcx-reveal');
+    window.setTimeout(function () {
+      el.classList.remove('tcx-reveal');
+      el.style.animationDelay = '';
+    }, 320);
+  }
+
+  function filterBy(cat) {
+    let shown = 0;
+    let i = 0;
+
+    items.forEach(function (el) {
+      const hit = cat === '全部' || el.getAttribute('data-cat') === cat;
+      if (hit) {
+        showCard(el, i);
+        i += 1;
+        shown += 1;
+      } else {
+        el.classList.add('tcx-hidden');
+        window.setTimeout(function () {
+          if (el.classList.contains('tcx-hidden')) el.style.display = 'none';
+        }, 180);
+      }
+    });
+
+    empty.classList.toggle('hidden', shown > 0);
+  }
+
+  tabs.addEventListener('click', function (e) {
+    const target = e.target instanceof HTMLElement ? e.target.closest('.tcx-tab') : null;
+    if (!(target instanceof HTMLElement)) return;
+    const cat = target.getAttribute('data-tool-cat');
+    if (!cat) return;
+    setActive(target);
+    filterBy(cat);
+  });
+})();
+</script>
+{{ end }}

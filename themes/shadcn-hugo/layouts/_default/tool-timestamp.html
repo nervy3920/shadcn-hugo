@@ -1,0 +1,133 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="mx-auto max-w-[980px] space-y-8">
+    <a href="/tools/" class="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors">
+      <i class="fa-solid fa-arrow-left"></i>
+      返回工具中心
+    </a>
+    <section class="relative overflow-hidden rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-blue-500/10"></div>
+      <div class="relative space-y-3">
+        <div class="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+          <i class="fa-solid fa-stopwatch text-primary"></i>
+          纯前端工具
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight md:text-4xl">{{ .Title }}</h1>
+        <p class="text-lg text-muted-foreground">{{ .Description | default "支持秒级/毫秒级时间戳与日期时间互转。" }}</p>
+      </div>
+    </section>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <section class="group rounded-2xl border bg-card p-5 md:p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">时间戳转日期</h2>
+          <span class="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">10/13 位</span>
+        </div>
+        <div class="space-y-2">
+          <label for="ts-input" class="text-sm font-medium">输入时间戳（秒或毫秒）</label>
+          <input id="ts-input" type="text" placeholder="例如：1712304000 或 1712304000000" class="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+        <button id="ts-to-date-btn" class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors gap-2">
+          <i class="fa-solid fa-arrow-right"></i>
+          转换为日期
+        </button>
+        <div id="ts-to-date-result" class="rounded-xl border bg-background p-3 text-sm text-muted-foreground min-h-16 flex items-center"></div>
+      </section>
+
+      <section class="group rounded-2xl border bg-card p-5 md:p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">日期转时间戳</h2>
+          <span class="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">本地时区</span>
+        </div>
+        <div class="space-y-2">
+          <label for="date-input" class="text-sm font-medium">输入日期时间</label>
+          <input id="date-input" type="datetime-local" class="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+        <button id="date-to-ts-btn" class="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors gap-2">
+          <i class="fa-solid fa-arrow-left"></i>
+          转换为时间戳
+        </button>
+        <div id="date-to-ts-result" class="rounded-xl border bg-background p-3 text-sm text-muted-foreground min-h-16 flex items-center"></div>
+      </section>
+    </div>
+
+    <section class="relative overflow-hidden rounded-2xl border bg-card p-5 md:p-6 shadow-sm">
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_45%)]"></div>
+      <div class="relative flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold">当前时间</h2>
+          <p class="text-sm text-muted-foreground">本地实时刷新</p>
+        </div>
+        <div id="now-time" class="font-mono text-sm rounded-lg border bg-background px-3 py-2"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function setText(id, text, isError) {
+    const el = byId(id);
+    el.textContent = text;
+    el.classList.remove('text-red-600', 'text-muted-foreground');
+    el.classList.add(isError ? 'text-red-600' : 'text-muted-foreground');
+  }
+
+  function parseTimestamp(raw) {
+    const value = String(raw || '').trim();
+    if (!/^\d{10,13}$/.test(value)) return null;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return null;
+    if (value.length === 10) return num * 1000;
+    if (value.length === 13) return num;
+    return null;
+  }
+
+  function timestampToDate() {
+    const ms = parseTimestamp(byId('ts-input').value);
+    if (!ms) {
+      setText('ts-to-date-result', '请输入 10 位（秒）或 13 位（毫秒）数字时间戳。', true);
+      return;
+    }
+    const date = new Date(ms);
+    if (Number.isNaN(date.getTime())) {
+      setText('ts-to-date-result', '时间戳无效。', true);
+      return;
+    }
+    setText('ts-to-date-result', date.toLocaleString() + ' (ISO: ' + date.toISOString() + ')', false);
+  }
+
+  function dateToTimestamp() {
+    const raw = byId('date-input').value;
+    if (!raw) {
+      setText('date-to-ts-result', '请先选择日期时间。', true);
+      return;
+    }
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      setText('date-to-ts-result', '日期格式无效。', true);
+      return;
+    }
+    setText('date-to-ts-result', '秒级: ' + Math.floor(date.getTime() / 1000) + ' | 毫秒级: ' + date.getTime(), false);
+  }
+
+  function updateNow() {
+    const now = new Date();
+    byId('now-time').textContent = now.toLocaleString();
+  }
+
+  byId('ts-to-date-btn').addEventListener('click', timestampToDate);
+  byId('date-to-ts-btn').addEventListener('click', dateToTimestamp);
+  byId('ts-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') timestampToDate(); });
+
+  const now = new Date();
+  byId('date-input').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  updateNow();
+  setInterval(updateNow, 1000);
+})();
+</script>
+{{ end }}

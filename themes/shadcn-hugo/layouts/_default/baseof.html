@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ .Site.LanguageCode | default "en-us" }}" class="scroll-smooth">
 {{ partial "head.html" . }}
-<body class="min-h-screen bg-background font-sans antialiased text-foreground selection:bg-primary/10 selection:text-primary">
+<body class="site-canvas {{ if .IsPage }}is-page{{ end }} {{ if and .IsPage (eq .Type "posts") }}is-article{{ end }} {{ if .IsHome }}is-home{{ end }} {{ if and (eq .Kind "section") (eq .Section "posts") }}is-posts-list{{ end }} {{ if eq .Kind "taxonomy" }}is-taxonomy{{ end }} {{ if eq .Kind "term" }}is-terms{{ end }} min-h-screen bg-background font-sans antialiased text-foreground selection:bg-primary/10 selection:text-primary">
     <div class="relative flex min-h-screen flex-col">
         {{ partial "header.html" . }}
         <main class="flex-1">

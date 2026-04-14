@@ -1,0 +1,130 @@
+{{ define "main" }}
+<div class="container py-10">
+  <div class="mx-auto max-w-[980px] space-y-8">
+    <a href="/tools/" class="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors">
+      <i class="fa-solid fa-arrow-left"></i>
+      返回工具中心
+    </a>
+    <section class="relative overflow-hidden rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-cyan-500/10"></div>
+      <div class="relative space-y-3">
+        <div class="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+          <i class="fa-solid fa-file-code text-primary"></i>
+          本地处理 · 不上传
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight md:text-4xl">{{ .Title }}</h1>
+        <p class="text-lg text-muted-foreground">{{ .Description | default "文本与 Base64 一键互转。" }}</p>
+      </div>
+    </section>
+
+    <div class="rounded-2xl border bg-card p-5 md:p-6 shadow-sm space-y-4">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+          <label for="base64-source" class="text-sm font-medium">原文</label>
+          <textarea id="base64-source" rows="12" class="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" placeholder="输入任意文本..."></textarea>
+        </div>
+        <div class="space-y-2">
+          <label for="base64-output" class="text-sm font-medium">Base64 / 解码结果</label>
+          <textarea id="base64-output" rows="12" class="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" placeholder="转换结果会显示在这里..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button id="base64-encode" class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors gap-2"><i class="fa-solid fa-lock"></i>编码</button>
+        <button id="base64-decode" class="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors gap-2"><i class="fa-solid fa-lock-open"></i>解码</button>
+        <button id="base64-swap" class="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">交换左右</button>
+        <button id="base64-copy" class="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">复制结果</button>
+        <button id="base64-clear" class="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">清空</button>
+      </div>
+
+      <div id="base64-msg" class="hidden rounded-lg border px-3 py-2 text-sm"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  function byId(id) { return document.getElementById(id); }
+
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (!ok) throw new Error('copy failed');
+  }
+
+  function showMsg(text, type) {
+    const el = byId('base64-msg');
+    el.textContent = text;
+    el.classList.remove('hidden', 'border-red-400/30', 'bg-red-50/50', 'text-red-700', 'border-green-400/30', 'bg-green-50/50', 'text-green-700', 'border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+    if (type === 'error') {
+      el.classList.add('border-red-400/30', 'bg-red-50/50', 'text-red-700');
+      return;
+    }
+    if (type === 'success') {
+      el.classList.add('border-green-400/30', 'bg-green-50/50', 'text-green-700');
+      return;
+    }
+    el.classList.add('border-amber-400/30', 'bg-amber-50/50', 'text-amber-700');
+  }
+
+  function encode() {
+    const source = byId('base64-source').value;
+    byId('base64-output').value = btoa(unescape(encodeURIComponent(source)));
+    showMsg('编码完成。', 'success');
+  }
+
+  function decode() {
+    const input = byId('base64-output').value.trim() || byId('base64-source').value.trim();
+    if (!input) {
+      showMsg('请输入 Base64 内容。', 'error');
+      return;
+    }
+    try {
+      const decoded = decodeURIComponent(escape(atob(input)));
+      byId('base64-source').value = decoded;
+      showMsg('解码完成，已写入左侧文本框。', 'success');
+    } catch (e) {
+      showMsg('Base64 格式不正确，解码失败。', 'error');
+    }
+  }
+
+  byId('base64-encode').addEventListener('click', encode);
+  byId('base64-decode').addEventListener('click', decode);
+  byId('base64-swap').addEventListener('click', function () {
+    const a = byId('base64-source').value;
+    const b = byId('base64-output').value;
+    byId('base64-source').value = b;
+    byId('base64-output').value = a;
+    showMsg('已交换左右内容。', 'success');
+  });
+  byId('base64-clear').addEventListener('click', function () {
+    byId('base64-source').value = '';
+    byId('base64-output').value = '';
+    showMsg('已清空。', 'success');
+  });
+  byId('base64-copy').addEventListener('click', async function () {
+    const text = byId('base64-output').value;
+    if (!text) {
+      showMsg('右侧没有可复制内容。', 'error');
+      return;
+    }
+    try {
+      await copyText(text);
+      showMsg('复制成功。', 'success');
+    } catch (e) {
+      showMsg('复制失败，请手动复制。', 'error');
+    }
+  });
+})();
+</script>
+{{ end }}

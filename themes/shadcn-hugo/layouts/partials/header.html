@@ -8,7 +8,9 @@
       <nav class="flex items-center space-x-6 text-sm font-medium">
         {{ $currentPage := . }}
         {{ range .Site.Menus.main }}
-          <a class="transition-colors hover:text-foreground/80 {{ if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }}text-foreground{{ else }}text-foreground/60{{ end }}" href="{{ .URL }}">
+          {{ $isCurrent := or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }}
+          {{ $isTools := eq .URL "/tools/" }}
+          <a class="transition-colors hover:text-foreground/80 {{ if $isCurrent }}text-foreground{{ else }}text-foreground/60{{ end }} {{ if $isTools }}tools-nav-link {{ if $isCurrent }}is-active{{ end }}{{ end }}" href="{{ .URL }}">
             {{ .Name }}
           </a>
         {{ end }}

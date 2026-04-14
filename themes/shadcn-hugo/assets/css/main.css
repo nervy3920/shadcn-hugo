@@ -232,3 +232,895 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/50;
 }
+
+.tools-nav-link {
+  @apply relative rounded-full px-3 py-1.5 border border-amber-500/50 text-amber-600;
+  background: linear-gradient(120deg, rgba(251, 191, 36, 0.14), rgba(245, 158, 11, 0.06));
+  box-shadow: 0 0 0 rgba(251, 191, 36, 0.35);
+  transition: all .25s ease;
+}
+
+.tools-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.tools-nav-link:hover,
+.tools-nav-link.is-active {
+  @apply text-amber-700;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.25);
+  transform: translateY(-1px);
+}
+
+.tools-nav-link:hover::after,
+.tools-nav-link.is-active::after {
+  opacity: 1;
+}
+
+.tool-card {
+  @apply rounded-xl border border-border/80 bg-card/80 p-4 text-card-foreground shadow-sm transition-all duration-300;
+  background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.10), transparent 35%);
+}
+
+.tool-card:hover {
+  @apply -translate-y-1 shadow-md border-primary/30;
+}
+
+.tool-card-featured {
+  @apply border-amber-400/60;
+  background-image: linear-gradient(125deg, rgba(251, 191, 36, 0.14), rgba(255, 255, 255, 0)),
+    radial-gradient(circle at top right, rgba(251, 191, 36, 0.24), transparent 40%);
+}
+
+.tool-chip {
+  @apply inline-flex items-center rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground;
+}
+
+/* ===== Tools Center UI Refresh ===== */
+.tools-center-shell {
+  backdrop-filter: blur(10px);
+  background-image:
+    radial-gradient(1000px 280px at 8% -10%, rgba(14, 165, 233, 0.12), transparent 42%),
+    radial-gradient(900px 260px at 92% 2%, rgba(251, 146, 60, 0.14), transparent 40%);
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.06);
+}
+
+.tools-center-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(34px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.tools-center-glow-a {
+  width: 260px;
+  height: 260px;
+  left: -80px;
+  top: -90px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.35), transparent 65%);
+  animation: toolsGlowFloatA 7s ease-in-out infinite;
+}
+
+.tools-center-glow-b {
+  width: 280px;
+  height: 280px;
+  right: -90px;
+  bottom: -120px;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.30), transparent 65%);
+  animation: toolsGlowFloatB 8s ease-in-out infinite;
+}
+
+.tools-center-kicker {
+  @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-widest;
+  color: rgb(30 64 175);
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(239, 246, 255, 0.75);
+}
+
+.tools-center-stats {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.tools-center-stat-item {
+  @apply rounded-xl border px-3 py-2 text-center;
+  border-color: color-mix(in srgb, var(--border) 74%, transparent);
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.tools-center-stat-num {
+  @apply block text-xl font-bold leading-none;
+}
+
+.tools-center-stat-label {
+  @apply mt-1 block text-[11px] text-muted-foreground;
+}
+
+.tools-tabs-wrap {
+  @apply rounded-2xl border p-3 md:p-4;
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.tools-tabs-header {
+  @apply mb-3 flex items-center justify-between gap-2;
+}
+
+.tools-tabs {
+  @apply flex flex-wrap gap-2;
+}
+
+.tool-tab {
+  @apply inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-300;
+  border-color: color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  color: color-mix(in srgb, var(--foreground) 86%, transparent);
+}
+
+.tool-tab:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 45%, var(--background));
+}
+
+.tool-tab.is-active {
+  color: rgb(255 255 255);
+  border-color: rgba(15, 23, 42, 0.15);
+  background: linear-gradient(135deg, rgb(59, 130, 246), rgb(14, 116, 144));
+  box-shadow: 0 10px 18px rgba(14, 116, 144, 0.28);
+}
+
+.tool-tab-count {
+  @apply rounded-full px-2 py-0.5 text-xs;
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.tool-tab.is-active .tool-tab-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tool-card-plus {
+  @apply relative overflow-hidden rounded-2xl border p-5 transition-all duration-300;
+  border-color: color-mix(in srgb, var(--border) 76%, transparent);
+  background:
+    radial-gradient(600px 120px at 100% 0%, rgba(14, 165, 233, 0.10), transparent 55%),
+    color-mix(in srgb, var(--card) 90%, transparent);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.tool-card-plus::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .32s ease;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.22) 45%, transparent 70%);
+}
+
+.tool-card-plus:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--border));
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.13);
+}
+
+.tool-card-plus:hover::before {
+  opacity: 1;
+}
+
+.tool-card-icon-wrap {
+  @apply inline-flex h-9 w-9 items-center justify-center rounded-full;
+  color: rgb(30, 64, 175);
+  background: linear-gradient(135deg, rgba(191, 219, 254, 0.75), rgba(125, 211, 252, 0.60));
+}
+
+.tool-card-hidden {
+  opacity: 0;
+  transform: translateY(6px) scale(0.985);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.tool-card-reveal {
+  animation: toolCardReveal .38s cubic-bezier(.2, .65, .2, 1) both;
+}
+
+@keyframes toolCardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toolsGlowFloatA {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(14px, 10px, 0); }
+}
+
+@keyframes toolsGlowFloatB {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-12px, -8px, 0); }
+}
+
+@media (max-width: 768px) {
+  .tools-center-stats {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tools-center-glow-a,
+  .tools-center-glow-b,
+  .tool-card-reveal {
+    animation: none !important;
+  }
+
+  .tool-card-plus,
+  .tool-tab {
+    transition: none !important;
+  }
+}
+
+/* ===== Tools Center UI Refresh v2 (editorial clean style) ===== */
+.tools-center-shell {
+  position: relative;
+  border-radius: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--card) 94%, transparent), color-mix(in srgb, var(--background) 96%, transparent)),
+    repeating-linear-gradient(0deg, rgba(100, 116, 139, 0.05) 0px, rgba(100, 116, 139, 0.05) 1px, transparent 1px, transparent 28px),
+    repeating-linear-gradient(90deg, rgba(100, 116, 139, 0.05) 0px, rgba(100, 116, 139, 0.05) 1px, transparent 1px, transparent 28px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  backdrop-filter: none;
+}
+
+.tools-center-glow,
+.tools-center-glow-a,
+.tools-center-glow-b {
+  display: none;
+}
+
+.tools-center-kicker {
+  letter-spacing: .18em;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.tools-center-stats {
+  gap: .5rem;
+}
+
+.tools-center-stat-item {
+  border-radius: .85rem;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  background: color-mix(in srgb, var(--background) 92%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  backdrop-filter: none;
+}
+
+.tools-tabs-wrap {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+}
+
+.tools-tabs {
+  gap: .4rem;
+}
+
+.tool-tab {
+  border-radius: .7rem;
+  border: 1px solid transparent;
+  padding: .45rem .78rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+}
+
+.tool-tab:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--accent) 55%, var(--background));
+}
+
+.tool-tab.is-active {
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+  background: color-mix(in srgb, var(--primary) 13%, var(--background));
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--primary) 78%, transparent);
+}
+
+.tool-tab-count {
+  border-radius: .45rem;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.tool-tab.is-active .tool-tab-count {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.tool-card-plus {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.tool-card-plus::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  opacity: .2;
+  border-radius: 1rem 0 0 1rem;
+  background: linear-gradient(180deg, rgb(14, 165, 233), rgb(59, 130, 246));
+  transition: opacity .25s ease;
+}
+
+.tool-card-plus:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--border));
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.10);
+}
+
+.tool-card-plus:hover::before {
+  opacity: .9;
+}
+
+.tool-card-icon-wrap {
+  border-radius: .75rem;
+  color: color-mix(in srgb, var(--primary) 78%, black);
+  background: color-mix(in srgb, var(--primary) 10%, var(--background));
+}
+
+.tool-card-hidden {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .22s ease;
+}
+
+.tool-card-reveal {
+  animation: toolCardRevealV2 .32s cubic-bezier(.2, .65, .2, 1) both;
+}
+
+@keyframes toolCardRevealV2 {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-card-plus,
+  .tool-tab,
+  .tool-card-reveal {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ===== Site Canvas Background ===== */
+.site-canvas {
+  position: relative;
+  background:
+    radial-gradient(900px 340px at -5% -10%, rgba(59, 130, 246, 0.09), transparent 45%),
+    radial-gradient(860px 300px at 105% 6%, rgba(16, 185, 129, 0.08), transparent 44%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.55), rgba(255, 255, 255, 0.78));
+}
+
+.site-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at 50% 30%, black 42%, transparent 88%);
+}
+
+.dark .site-canvas {
+  background:
+    radial-gradient(900px 340px at -5% -10%, rgba(37, 99, 235, 0.16), transparent 45%),
+    radial-gradient(860px 300px at 105% 6%, rgba(5, 150, 105, 0.14), transparent 44%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.92));
+}
+
+.dark .site-canvas::before {
+  background-image:
+    linear-gradient(rgba(100, 116, 139, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.13) 1px, transparent 1px);
+  opacity: 0.5;
+}
+
+/* ===== Tool Center (shadcn/ui style) ===== */
+.tcx-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.tcx-kicker {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.9;
+}
+
+.tcx-tabs {
+  isolation: isolate;
+}
+
+.tcx-tab-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 2.25rem;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--accent));
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  transition: transform .24s cubic-bezier(.22, .78, .2, 1), width .24s cubic-bezier(.22, .78, .2, 1), opacity .2s ease;
+  opacity: 0;
+  z-index: 0;
+}
+
+.tcx-tab {
+  position: relative;
+  z-index: 1;
+  height: 2.25rem;
+  padding: 0 .78rem;
+  border-radius: calc(var(--radius) - 2px);
+  color: hsl(var(--muted-foreground));
+  font-size: .875rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: color .2s ease, transform .2s ease;
+}
+
+.tcx-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.tcx-tab.is-active {
+  color: hsl(var(--foreground));
+}
+
+.tcx-count {
+  margin-left: .3rem;
+  border-radius: 9999px;
+  padding: .06rem .45rem;
+  font-size: .72rem;
+  background: color-mix(in srgb, hsl(var(--foreground)) 8%, transparent);
+}
+
+.tcx-card {
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 2px);
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent);
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
+}
+
+.tcx-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, hsl(var(--primary)) 38%, hsl(var(--border)));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.tcx-card-featured {
+  border-color: color-mix(in srgb, hsl(var(--primary)) 34%, hsl(var(--border)));
+  background: linear-gradient(180deg, color-mix(in srgb, hsl(var(--primary)) 4%, hsl(var(--card))), hsl(var(--card)));
+}
+
+.tcx-hidden {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.tcx-reveal {
+  animation: tcxReveal .28s cubic-bezier(.22, .78, .2, 1) both;
+}
+
+@keyframes tcxReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .site-canvas::before {
+    background-size: 22px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tcx-tab-indicator,
+  .tcx-tab,
+  .tcx-card,
+  .tcx-reveal,
+  .tcx-hidden {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ===== Tool Tabs Polish (no overlap) ===== */
+.tcx-tabs {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, hsl(var(--muted-foreground)) 30%, transparent) transparent;
+}
+
+.tcx-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tcx-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tcx-tabs::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, hsl(var(--muted-foreground)) 28%, transparent);
+  border-radius: 9999px;
+}
+
+.tcx-tab {
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.tcx-tab.is-active {
+  color: hsl(var(--foreground));
+  background: hsl(var(--accent));
+  border-color: hsl(var(--border));
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.06);
+}
+
+/* disable old indicator style completely */
+.tcx-tab-indicator {
+  display: none !important;
+}
+
+/* ===== Tool Center Fine Tuning (tab spread + unified gray cards) ===== */
+.tcx-tab {
+  position: relative;
+  overflow: visible;
+}
+
+.tcx-tab.is-active {
+  color: hsl(var(--foreground));
+  background: color-mix(in srgb, hsl(var(--accent)) 82%, hsl(var(--background)));
+  border-color: color-mix(in srgb, hsl(var(--border)) 80%, hsl(var(--primary)));
+  box-shadow:
+    inset 0 -1px 0 color-mix(in srgb, hsl(var(--primary)) 35%, transparent),
+    0 10px 16px -12px rgba(15, 23, 42, 0.35);
+  transform: translateY(1px);
+}
+
+.tcx-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -8px;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, hsl(var(--primary)) 22%, transparent);
+  filter: blur(6px);
+  opacity: .5;
+  pointer-events: none;
+}
+
+.tcx-card,
+.tcx-card-featured {
+  background: color-mix(in srgb, hsl(var(--muted)) 36%, hsl(var(--card)));
+}
+
+.tcx-card-featured {
+  border-color: color-mix(in srgb, hsl(var(--primary)) 28%, hsl(var(--border)));
+}
+
+/* ===== Visual Boost: global background + tinted tool cards ===== */
+.site-canvas {
+  background:
+    radial-gradient(1100px 420px at -8% -12%, rgba(56, 189, 248, 0.18), transparent 48%),
+    radial-gradient(980px 380px at 112% 4%, rgba(52, 211, 153, 0.16), transparent 46%),
+    radial-gradient(920px 360px at 50% 118%, rgba(99, 102, 241, 0.12), transparent 52%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.7), rgba(255, 255, 255, 0.92));
+}
+
+.site-canvas::before {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at 50% 28%, black 58%, transparent 92%);
+}
+
+.site-canvas::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(420px 220px at 12% 12%, rgba(59, 130, 246, 0.14), transparent 70%),
+    radial-gradient(460px 260px at 86% 18%, rgba(16, 185, 129, 0.13), transparent 72%),
+    radial-gradient(520px 300px at 50% 88%, rgba(99, 102, 241, 0.11), transparent 74%);
+  opacity: .85;
+}
+
+.dark .site-canvas {
+  background:
+    radial-gradient(1100px 420px at -8% -12%, rgba(37, 99, 235, 0.28), transparent 48%),
+    radial-gradient(980px 380px at 112% 4%, rgba(5, 150, 105, 0.24), transparent 46%),
+    radial-gradient(920px 360px at 50% 118%, rgba(79, 70, 229, 0.2), transparent 52%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.78), rgba(2, 6, 23, 0.96));
+}
+
+.dark .site-canvas::before {
+  background-image:
+    linear-gradient(rgba(100, 116, 139, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.2) 1px, transparent 1px);
+}
+
+.dark .site-canvas::after {
+  opacity: .7;
+}
+
+.tcx-card {
+  --tcx-tint: rgba(59, 130, 246, 0.1);
+  background:
+    radial-gradient(120% 90% at 102% -8%, var(--tcx-tint), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, hsl(var(--muted)) 42%, hsl(var(--card))), color-mix(in srgb, hsl(var(--muted)) 30%, hsl(var(--card))));
+}
+
+.tcx-card:nth-child(6n + 1) { --tcx-tint: rgba(59, 130, 246, 0.12); }
+.tcx-card:nth-child(6n + 2) { --tcx-tint: rgba(16, 185, 129, 0.12); }
+.tcx-card:nth-child(6n + 3) { --tcx-tint: rgba(99, 102, 241, 0.11); }
+.tcx-card:nth-child(6n + 4) { --tcx-tint: rgba(234, 88, 12, 0.11); }
+.tcx-card:nth-child(6n + 5) { --tcx-tint: rgba(14, 165, 233, 0.12); }
+.tcx-card:nth-child(6n + 6) { --tcx-tint: rgba(217, 70, 239, 0.1); }
+
+.tcx-card-featured {
+  background:
+    radial-gradient(120% 90% at 102% -8%, rgba(245, 158, 11, 0.16), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, hsl(var(--muted)) 46%, hsl(var(--card))), color-mix(in srgb, hsl(var(--muted)) 30%, hsl(var(--card))));
+}
+
+/* ===== Article Readability Tune (avoid blending with global bg) ===== */
+.is-article.site-canvas {
+  background:
+    radial-gradient(900px 360px at -10% -12%, rgba(56, 189, 248, 0.10), transparent 50%),
+    radial-gradient(860px 320px at 108% 4%, rgba(52, 211, 153, 0.09), transparent 48%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.5), rgba(255, 255, 255, 0.85));
+}
+
+.is-article.site-canvas::after {
+  opacity: 0.35;
+}
+
+.is-article.site-canvas::before {
+  opacity: 0.65;
+}
+
+.is-article .article-shell {
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 86%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  padding: 1.1rem 1.2rem;
+}
+
+.is-article .toc-shell {
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 86%, transparent);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+  padding: 0.9rem 0.9rem 0.75rem;
+}
+
+.is-article .prose pre {
+  background-color: color-mix(in srgb, hsl(var(--muted)) 72%, white) !important;
+  border-color: color-mix(in srgb, hsl(var(--border)) 88%, transparent);
+}
+
+.is-article .dark .prose pre,
+.dark .is-article .prose pre {
+  background-color: #111827 !important;
+}
+
+.is-article .prose table {
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 88%, transparent);
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: color-mix(in srgb, hsl(var(--background)) 96%, transparent);
+}
+
+@media (max-width: 1024px) {
+  .is-article .article-shell {
+    padding: 0.95rem 0.95rem;
+  }
+}
+
+/* ===== Home / Posts / Taxonomy / Terms readability layers ===== */
+:is(.is-posts-list, .is-taxonomy, .is-terms).site-canvas {
+  background:
+    radial-gradient(980px 380px at -10% -12%, rgba(56, 189, 248, 0.12), transparent 50%),
+    radial-gradient(920px 350px at 110% 4%, rgba(52, 211, 153, 0.11), transparent 48%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.56), rgba(255, 255, 255, 0.88));
+}
+
+:is(.is-posts-list, .is-taxonomy, .is-terms).site-canvas::before {
+  opacity: 0.72;
+}
+
+:is(.is-posts-list, .is-taxonomy, .is-terms).site-canvas::after {
+  opacity: 0.45;
+}
+
+.posts-list-shell,
+.tax-shell,
+.terms-shell {
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 86%, transparent);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+:is(.is-posts-list, .is-taxonomy, .is-terms) .post-card-shell {
+  border-color: color-mix(in srgb, hsl(var(--border)) 88%, transparent);
+  background: color-mix(in srgb, hsl(var(--card)) 96%, transparent);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.045);
+}
+
+:is(.is-posts-list, .is-taxonomy, .is-terms) .post-card-shell:hover {
+  border-color: color-mix(in srgb, hsl(var(--primary)) 36%, hsl(var(--border)));
+  box-shadow: 0 14px 26px rgba(15, 23, 42, 0.08);
+}
+
+:is(.is-posts-list, .is-taxonomy, .is-terms) .post-card-shell .bg-muted {
+  background: color-mix(in srgb, hsl(var(--muted)) 75%, white);
+}
+
+@media (max-width: 1024px) {
+  .posts-list-shell,
+  .tax-shell,
+  .terms-shell {
+    /* keep original py-10 spacing from template utility classes */
+  }
+}
+
+/* ===== Shell inner spacing fix ===== */
+.posts-list-shell,
+.tax-shell,
+.terms-shell {
+  padding: 1.15rem 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .posts-list-shell,
+  .tax-shell,
+  .terms-shell {
+    padding: 0.95rem 0.92rem;
+  }
+}
+
+/* ===== Terms chips colorful backgrounds (tags/categories) ===== */
+.terms-shell .term-chip > span,
+.terms-shell .term-chip .inline-flex {
+  border-color: transparent !important;
+  color: hsl(var(--foreground));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, hsl(var(--foreground)) 6%, transparent);
+}
+
+.terms-shell .term-chip:nth-child(10n + 1) > span,
+.terms-shell .term-chip:nth-child(10n + 1) .inline-flex { background: linear-gradient(135deg, rgba(59,130,246,0.20), rgba(59,130,246,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 2) > span,
+.terms-shell .term-chip:nth-child(10n + 2) .inline-flex { background: linear-gradient(135deg, rgba(16,185,129,0.20), rgba(16,185,129,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 3) > span,
+.terms-shell .term-chip:nth-child(10n + 3) .inline-flex { background: linear-gradient(135deg, rgba(99,102,241,0.20), rgba(99,102,241,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 4) > span,
+.terms-shell .term-chip:nth-child(10n + 4) .inline-flex { background: linear-gradient(135deg, rgba(234,88,12,0.20), rgba(234,88,12,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 5) > span,
+.terms-shell .term-chip:nth-child(10n + 5) .inline-flex { background: linear-gradient(135deg, rgba(217,70,239,0.20), rgba(217,70,239,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 6) > span,
+.terms-shell .term-chip:nth-child(10n + 6) .inline-flex { background: linear-gradient(135deg, rgba(245,158,11,0.22), rgba(245,158,11,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 7) > span,
+.terms-shell .term-chip:nth-child(10n + 7) .inline-flex { background: linear-gradient(135deg, rgba(20,184,166,0.20), rgba(20,184,166,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 8) > span,
+.terms-shell .term-chip:nth-child(10n + 8) .inline-flex { background: linear-gradient(135deg, rgba(168,85,247,0.20), rgba(168,85,247,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 9) > span,
+.terms-shell .term-chip:nth-child(10n + 9) .inline-flex { background: linear-gradient(135deg, rgba(244,63,94,0.20), rgba(244,63,94,0.10)); }
+.terms-shell .term-chip:nth-child(10n + 10) > span,
+.terms-shell .term-chip:nth-child(10n + 10) .inline-flex { background: linear-gradient(135deg, rgba(14,165,233,0.22), rgba(14,165,233,0.10)); }
+
+.dark .terms-shell .term-chip > span,
+.dark .terms-shell .term-chip .inline-flex {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, hsl(var(--foreground)) 10%, transparent);
+}
+
+/* ===== Terms chips enhanced palette + typography + hover scale ===== */
+.terms-shell .term-chip {
+  display: inline-flex;
+  transition: transform .2s ease, filter .2s ease;
+}
+
+.terms-shell .term-chip:hover {
+  transform: translateY(-1px) scale(1.05);
+  filter: saturate(1.08);
+}
+
+.terms-shell .term-chip > span,
+.terms-shell .term-chip .inline-flex {
+  color: #334155 !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.terms-shell .term-chip:nth-child(16n + 1) > span,
+.terms-shell .term-chip:nth-child(16n + 1) .inline-flex { background: linear-gradient(135deg, rgba(59,130,246,0.22), rgba(59,130,246,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 2) > span,
+.terms-shell .term-chip:nth-child(16n + 2) .inline-flex { background: linear-gradient(135deg, rgba(16,185,129,0.22), rgba(16,185,129,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 3) > span,
+.terms-shell .term-chip:nth-child(16n + 3) .inline-flex { background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(99,102,241,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 4) > span,
+.terms-shell .term-chip:nth-child(16n + 4) .inline-flex { background: linear-gradient(135deg, rgba(234,88,12,0.22), rgba(234,88,12,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 5) > span,
+.terms-shell .term-chip:nth-child(16n + 5) .inline-flex { background: linear-gradient(135deg, rgba(217,70,239,0.22), rgba(217,70,239,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 6) > span,
+.terms-shell .term-chip:nth-child(16n + 6) .inline-flex { background: linear-gradient(135deg, rgba(245,158,11,0.24), rgba(245,158,11,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 7) > span,
+.terms-shell .term-chip:nth-child(16n + 7) .inline-flex { background: linear-gradient(135deg, rgba(20,184,166,0.22), rgba(20,184,166,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 8) > span,
+.terms-shell .term-chip:nth-child(16n + 8) .inline-flex { background: linear-gradient(135deg, rgba(168,85,247,0.22), rgba(168,85,247,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 9) > span,
+.terms-shell .term-chip:nth-child(16n + 9) .inline-flex { background: linear-gradient(135deg, rgba(244,63,94,0.22), rgba(244,63,94,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 10) > span,
+.terms-shell .term-chip:nth-child(16n + 10) .inline-flex { background: linear-gradient(135deg, rgba(14,165,233,0.24), rgba(14,165,233,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 11) > span,
+.terms-shell .term-chip:nth-child(16n + 11) .inline-flex { background: linear-gradient(135deg, rgba(132,204,22,0.22), rgba(132,204,22,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 12) > span,
+.terms-shell .term-chip:nth-child(16n + 12) .inline-flex { background: linear-gradient(135deg, rgba(6,182,212,0.22), rgba(6,182,212,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 13) > span,
+.terms-shell .term-chip:nth-child(16n + 13) .inline-flex { background: linear-gradient(135deg, rgba(236,72,153,0.22), rgba(236,72,153,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 14) > span,
+.terms-shell .term-chip:nth-child(16n + 14) .inline-flex { background: linear-gradient(135deg, rgba(251,113,133,0.22), rgba(251,113,133,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 15) > span,
+.terms-shell .term-chip:nth-child(16n + 15) .inline-flex { background: linear-gradient(135deg, rgba(45,212,191,0.22), rgba(45,212,191,0.10)); }
+.terms-shell .term-chip:nth-child(16n + 16) > span,
+.terms-shell .term-chip:nth-child(16n + 16) .inline-flex { background: linear-gradient(135deg, rgba(167,139,250,0.22), rgba(167,139,250,0.10)); }
+
+.dark .terms-shell .term-chip > span,
+.dark .terms-shell .term-chip .inline-flex {
+  color: #dbeafe !important;
+}
